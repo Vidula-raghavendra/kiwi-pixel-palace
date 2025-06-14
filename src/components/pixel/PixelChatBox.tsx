@@ -1,18 +1,91 @@
 
-import React from "react";
+import React, { useState, useRef } from "react";
 import { ChatBubbleIcon, PixelGem } from "./PixelIcons";
 
-/** Main chat window as a pixel art dialogue box w/ avatar and RPG chat bar */
+// Message type for chat
+type ChatMessage = {
+  sender: "user" | "ai";
+  text: string;
+};
+
 export default function PixelChatBox() {
-  // Prevent form submission from refreshing the page
-  function handleSubmit(e: React.FormEvent) {
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    { sender: "ai", text: "welcome to kiwi! how can i help you today?" },
+  ]);
+  const [loading, setLoading] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Scroll to the latest message when messages change
+  const chatBodyRef = useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    if (chatBodyRef.current) {
+      chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // Add chat logic here if needed!
+    const trimmed = input.trim();
+    if (!trimmed) return;
+
+    // Append user's message
+    setMessages((msgs) => [...msgs, { sender: "user", text: trimmed }]);
+    setInput("");
+    setLoading(true);
+
+    // Call Gemini via Supabase Edge Function
+    try {
+      const res = await fetch(
+        "https://wuetwwdfqellisyxpivr.supabase.co/functions/v1/gemini",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: trimmed }),
+        }
+      );
+      const data = await res.json();
+      if (data?.result) {
+        setMessages((msgs) => [...msgs, { sender: "ai", text: data.result }]);
+      } else if (data?.error) {
+        setMessages((msgs) => [
+          ...msgs,
+          { sender: "ai", text: "Sorry, there was an error: " + data.error },
+        ]);
+      } else {
+        setMessages((msgs) => [
+          ...msgs,
+          { sender: "ai", text: "No response from AI." },
+        ]);
+      }
+    } catch (err: any) {
+      setMessages((msgs) => [
+        ...msgs,
+        {
+          sender: "ai",
+          text: "Network error: " + (err?.message || "Unknown error"),
+        },
+      ]);
+    }
+    setLoading(false);
+    inputRef.current?.focus();
+  }
+
+  // Press Enter to send, Shift+Enter for newline
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (!loading) {
+        handleSubmit(e as any);
+      }
+    }
   }
 
   return (
-    <section className="flex flex-col items-center justify-center px-7 py-4 w-full h-full"
-      style={{ minWidth: "340px", maxWidth: "540px" }}>
+    <section
+      className="flex flex-col items-center justify-center px-7 py-4 w-full h-full"
+      style={{ minWidth: "340px", maxWidth: "540px" }}
+    >
       <div
         className="pixel-outline bg-[#fffde8] flex flex-col items-stretch px-0 py-0 shadow-none no-radius"
         style={{
@@ -22,45 +95,87 @@ export default function PixelChatBox() {
         }}
       >
         {/* Header */}
-        <div className="pixel-outline bg-[#b4f49f] block py-2 px-5 pixel-font pixel-title text-[#233f24] tracking-wide no-radius"
-          style={{ fontSize: "15px", borderBottom: "none", outlineWidth:"2.5px" }}>
+        <div
+          className="pixel-outline bg-[#b4f49f] block py-2 px-5 pixel-font pixel-title text-[#233f24] tracking-wide no-radius"
+          style={{
+            fontSize: "15px",
+            borderBottom: "none",
+            outlineWidth: "2.5px",
+          }}
+        >
           MY WORKSPACE
         </div>
         {/* Chat Body */}
-        <div className="relative flex py-6 pb-11 px-8 bg-[#fffde8] min-h-[110px]">
-          {/* Avatar */}
-          <div className="mr-4">
-            <div className="w-10 h-10 pixel-outline bg-[#f0fdde] flex items-center justify-center no-radius"
-              style={{ outlineColor: "#8CC84B" }}>
-              <img
-                src="https://api.dicebear.com/7.x/pixel-art/svg?seed=KiwiBot&eyes=variant09&mouth=variant13&scale=110"
-                alt="KIWI AI avatar"
-                width={30}
-                height={30}
-                style={{
-                  imageRendering: "pixelated",
-                  width: 30,
-                  height: 30,
-                  display: "block",
-                }}
-                className="no-radius"
-              />
-            </div>
-          </div>
-          {/* Bubble + Text */}
-          <div className="flex-1 min-w-0">
-            <div className="relative">
-              <div className="absolute -left-5 -top-2 z-0">
-                <ChatBubbleIcon size={32} />
-              </div>
+        <div
+          ref={chatBodyRef}
+          className="relative flex flex-col gap-4 py-6 pb-2 px-6 bg-[#fffde8] min-h-[120px] max-h-[260px] overflow-y-auto"
+          style={{ transition: "background 0.2s" }}
+        >
+          {messages.map((m, idx) => (
+            <div key={idx} className="flex items-start gap-2">
+              {/* Avatar for AI */}
+              {m.sender === "ai" && (
+                <div className="mr-2 flex-shrink-0">
+                  <div
+                    className="w-8 h-8 pixel-outline bg-[#f0fdde] flex items-center justify-center no-radius"
+                    style={{ outlineColor: "#8CC84B" }}
+                  >
+                    <img
+                      src="https://api.dicebear.com/7.x/pixel-art/svg?seed=KiwiBot&eyes=variant09&mouth=variant13&scale=110"
+                      alt="KIWI AI avatar"
+                      width={22}
+                      height={22}
+                      style={{
+                        imageRendering: "pixelated",
+                        width: 22,
+                        height: 22,
+                        display: "block",
+                      }}
+                      className="no-radius"
+                    />
+                  </div>
+                </div>
+              )}
+              {/* User bubble */}
+              {m.sender === "user" && (
+                <div className="mr-2 flex-shrink-0" />
+              )}
+              {/* Message bubble */}
               <div
-                className="pl-5 z-10 pixel-font text-[12px] text-[#233f24]"
-                style={{ textTransform: "none" }}
+                className={`relative flex-1 min-w-0 ${
+                  m.sender === "ai"
+                    ? "pl-2"
+                    : "flex justify-end text-right pr-2"
+                }`}
               >
-                welcome to kiwi! how can i help you today?
+                <div className="relative flex items-center">
+                  {m.sender === "ai" && (
+                    <span className="absolute -left-6 -top-2 z-0">
+                      <ChatBubbleIcon size={28} />
+                    </span>
+                  )}
+                  <div
+                    className={`z-10 pixel-font text-[12px] text-[#233f24] rounded px-3 py-2 ${
+                      m.sender === "ai"
+                        ? "bg-[#ebffde]"
+                        : "bg-[#d6f4f7] border border-[#b4f4ea]"
+                    }`}
+                    style={{ textTransform: "none", wordBreak: "break-word" }}
+                  >
+                    {m.text}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          ))}
+          {loading && (
+            <div className="flex items-center gap-2 opacity-80 pl-8">
+              <span className="h-3 w-3 rounded-full bg-[#badc5b] animate-pulse mr-2" />
+              <span className="pixel-font text-xs text-[#88b062]">
+                Thinking...
+              </span>
+            </div>
+          )}
         </div>
         {/* Chat Bar: RPG input */}
         <form
@@ -77,6 +192,7 @@ export default function PixelChatBox() {
           </span>
           {/* Input */}
           <input
+            ref={inputRef}
             type="text"
             className="pixel-font text-[13px] no-radius bg-[#fff] py-1 px-2 w-full outline-none border-2 border-[#b4f49f] pixel-outline"
             placeholder="type your message..."
@@ -84,17 +200,23 @@ export default function PixelChatBox() {
               outlineWidth: "1px",
               borderRadius: 0,
               minHeight: "27px",
-              boxSizing: "border-box"
+              boxSizing: "border-box",
             }}
             spellCheck={false}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={loading}
+            autoFocus
           />
           {/* Send button */}
           <button
             type="submit"
             className="ml-3 flex items-center justify-center px-2 py-1 pixel-outline bg-[#91eead] hover:bg-[#b4f49f] no-radius pixel-font text-xs text-[#233f24] transition"
             style={{ fontWeight: "bold", fontSize: "13px" }}
+            disabled={loading || input.trim().length === 0}
           >
-            SEND
+            {loading ? "..." : "SEND"}
           </button>
         </form>
       </div>
