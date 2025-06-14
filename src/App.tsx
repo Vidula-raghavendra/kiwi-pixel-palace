@@ -5,6 +5,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import LandingPage from "./pages/LandingPage";
+// Placeholder pages till later steps
+const LoginPage = () => <div className="pixel-font min-h-[50vh] flex items-center justify-center text-2xl">[Login will go here]</div>;
+const SignupPage = () => <div className="pixel-font min-h-[50vh] flex items-center justify-center text-2xl">[Signup will go here]</div>;
+const DashboardPage = () => <div className="pixel-font min-h-[50vh] flex items-center justify-center text-2xl">[Dashboard goes here]</div>;
+const WorkspacePage = () => <div className="pixel-font min-h-[50vh] flex items-center justify-center text-2xl">[Workspace goes here]</div>;
 
 const queryClient = new QueryClient();
 
@@ -15,8 +21,11 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/home" element={<DashboardPage />} />
+          <Route path="/workspace/:id" element={<WorkspacePage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
