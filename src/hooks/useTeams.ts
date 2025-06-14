@@ -25,7 +25,7 @@ export interface TeamMember {
     full_name: string | null;
     avatar_url: string | null;
     github_username: string | null;
-  };
+  } | null;
 }
 
 export interface Project {
@@ -78,8 +78,12 @@ export const useTeams = () => {
       const { data, error } = await supabase
         .from('team_members')
         .select(`
-          *,
-          profiles (
+          id,
+          team_id,
+          user_id,
+          role,
+          joined_at,
+          profiles!inner (
             username,
             full_name,
             avatar_url,
@@ -89,7 +93,18 @@ export const useTeams = () => {
         .eq('team_id', teamId);
         
       if (error) throw error;
-      setTeamMembers(data || []);
+      
+      // Transform the data to match our interface
+      const transformedData: TeamMember[] = (data || []).map(item => ({
+        id: item.id,
+        team_id: item.team_id,
+        user_id: item.user_id,
+        role: item.role as 'admin' | 'editor' | 'viewer',
+        joined_at: item.joined_at,
+        profiles: item.profiles
+      }));
+      
+      setTeamMembers(transformedData);
     } catch (error: any) {
       console.error('Error fetching team members:', error);
     }
