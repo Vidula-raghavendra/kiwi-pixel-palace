@@ -4,6 +4,12 @@ import { ChatBubbleIcon, PixelGem } from "./PixelIcons";
 
 /** Main chat window as a pixel art dialogue box w/ avatar and RPG chat bar */
 export default function PixelChatBox() {
+  // Prevent form submission from refreshing the page
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    // Add chat logic here if needed!
+  }
+
   return (
     <section className="flex flex-col items-center justify-center px-7 py-4 w-full h-full"
       style={{ minWidth: "340px", maxWidth: "540px" }}>
@@ -57,11 +63,13 @@ export default function PixelChatBox() {
           </div>
         </div>
         {/* Chat Bar: RPG input */}
-        <form className="flex items-center px-4 py-3 bg-[#e8f6da] pixel-outline border-t-0 border-[#badc5b] no-radius"
+        <form
+          className="flex items-center px-4 py-3 bg-[#e8f6da] pixel-outline border-t-0 border-[#badc5b] no-radius"
           style={{
             borderTop: 0,
             minHeight: "44px",
           }}
+          onSubmit={handleSubmit}
         >
           {/* Emoji/Gem */}
           <span className="mr-2 flex items-center justify-center">
