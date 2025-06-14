@@ -50,7 +50,7 @@ export default function PixelChatBox() {
       } else if (data?.error) {
         setMessages((msgs) => [
           ...msgs,
-          { sender: "ai", text: "Sorry, there was an error: " + data.error },
+          { sender: "ai", text: "Sorry, there was an error: " + String(data.error) },
         ]);
       } else {
         setMessages((msgs) => [
@@ -63,7 +63,7 @@ export default function PixelChatBox() {
         ...msgs,
         {
           sender: "ai",
-          text: "Network error: " + (err?.message || "Unknown error"),
+          text: "Network error: " + String(err?.message || "Unknown error"),
         },
       ]);
     }
