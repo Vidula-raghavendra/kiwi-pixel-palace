@@ -10,8 +10,7 @@ import LoginForm from "./components/auth/LoginForm";
 import SignupForm from "./components/auth/SignupForm";
 import Dashboard from "./components/Dashboard";
 import React from "react";
--import WorkspaceRoom from "./components/WorkspaceRoom";
-+import KiwiWorkspace from "./components/KiwiWorkspace";
+import KiwiWorkspace from "./components/KiwiWorkspace";
 
 const LoginPage = () => (
   <div className="min-h-[60vh] flex flex-col justify-center items-center">
@@ -36,8 +35,7 @@ const DashboardPage = () => {
     </div>
   );
 };
--const WorkspacePage = () => <WorkspaceRoom />;
-+const WorkspacePage = () => <KiwiWorkspace />;
+const WorkspacePage = () => <KiwiWorkspace />;
 
 const queryClient = new QueryClient();
 
@@ -52,11 +50,9 @@ const App = () => (
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/home" element={<DashboardPage />} />
--          <Route path="/workspace/:id" element={<WorkspacePage />} />
--          <Route path="*" element={<NotFound />} />
-+          <Route path="/workspace/:id" element={<WorkspacePage />} />
-+          <Route path="/workspace/my-room" element={<KiwiWorkspace />} />
-+          <Route path="*" element={<NotFound />} />
+          <Route path="/workspace/:id" element={<WorkspacePage />} />
+          <Route path="/workspace/my-room" element={<KiwiWorkspace />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
