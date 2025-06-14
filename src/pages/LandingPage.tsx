@@ -46,12 +46,12 @@ export default function LandingPage() {
         <PixelMascot message="Hey there, Player! Ready to build?" />
       </div>
 
-      {/* Main CTA */}
+      {/* Main CTA - Updated to use new auth flow */}
       <div className="flex gap-6 mb-12">
-        <Pixel3DButton color="kiwi" onClick={() => navigate("/login")}>
+        <Pixel3DButton color="kiwi" onClick={() => navigate("/auth")}>
           🎮 Start Game
         </Pixel3DButton>
-        <Pixel3DButton color="peach" onClick={() => navigate("/signup")}>
+        <Pixel3DButton color="peach" onClick={() => navigate("/auth")}>
           🌱 New Player
         </Pixel3DButton>
       </div>
