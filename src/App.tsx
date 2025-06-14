@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,6 +12,7 @@ import SignupForm from "./components/auth/SignupForm";
 import Dashboard from "./components/Dashboard";
 import React from "react";
 import KiwiWorkspace from "./components/KiwiWorkspace";
+import WorkspaceRoom from "./components/WorkspaceRoom";
 
 const LoginPage = () => (
   <div className="min-h-[60vh] flex flex-col justify-center items-center">
@@ -36,6 +38,7 @@ const DashboardPage = () => {
   );
 };
 const WorkspacePage = () => <KiwiWorkspace />;
+const WorkspaceRoomPage = () => <WorkspaceRoom />;
 
 const queryClient = new QueryClient();
 
@@ -51,7 +54,7 @@ const App = () => (
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/home" element={<DashboardPage />} />
           <Route path="/workspace/:id" element={<WorkspacePage />} />
-          <Route path="/workspace/my-room" element={<KiwiWorkspace />} />
+          <Route path="/workspace/my-room" element={<WorkspaceRoomPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
@@ -60,3 +63,4 @@ const App = () => (
 );
 
 export default App;
+
