@@ -1,0 +1,6 @@
+
+/* White pixel glove pointer based on classic RPG cursors */
+html, body, * {
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24'><rect x='0' y='0' width='24' height='24' fill='none'/><path d='M2 2v17l9-2 9 2V2z' fill='white' stroke='black' stroke-width='1' /><path d='M7 8h5v2H7z' fill='black'/></svg>") 4 0, pointer !important;
+  -webkit-tap-highlight-color: transparent;
+}

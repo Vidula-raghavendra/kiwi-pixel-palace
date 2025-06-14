@@ -1,0 +1,48 @@
+
+/* Import retro pixel font and general style for the UI */
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+:root {
+  --pixel-font: 'Press Start 2P', monospace;
+}
+
+/* All pixel text styles */
+.pixel-font {
+  font-family: var(--pixel-font) !important;
+  font-weight: 400;
+  letter-spacing: .5px;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0;
+  text-transform: none;
+  user-select: none;
+  /* No anti-aliasing for strict pixel look: */
+  -webkit-font-smoothing: none !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  text-rendering: optimizeSpeed !important;
+}
+
+/* Pixel outline for all block UI */
+.pixel-outline {
+  outline: 1.5px solid #233f24;
+  outline-offset: -2px;
+}
+
+/* All caps for section titles */
+.pixel-title {
+  text-transform: uppercase;
+  font-size: 1rem;
+  letter-spacing: 1px;
+}
+
+/* No anti-alias border on SVG icons */
+.pixel-icon {
+  shape-rendering: crispEdges;
+  image-rendering: pixelated;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Remove border radius everywhere unless explicitly added in stepped corners */
+.no-radius {
+  border-radius: 0 !important;
+}
