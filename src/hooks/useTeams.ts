@@ -72,36 +72,41 @@ export const useTeams = () => {
     }
   };
 
-  // Fetch team members
+  // Fetch team members with a separate query for profiles
   const fetchTeamMembers = async (teamId: string) => {
     try {
-      const { data, error } = await supabase
+      // First get team members
+      const { data: membersData, error: membersError } = await supabase
         .from('team_members')
-        .select(`
-          id,
-          team_id,
-          user_id,
-          role,
-          joined_at,
-          profiles (
-            username,
-            full_name,
-            avatar_url,
-            github_username
-          )
-        `)
+        .select('*')
         .eq('team_id', teamId);
         
-      if (error) throw error;
+      if (membersError) throw membersError;
       
-      // Transform the data to match our interface
-      const transformedData: TeamMember[] = (data || []).map(item => ({
-        id: item.id,
-        team_id: item.team_id,
-        user_id: item.user_id,
-        role: item.role as 'admin' | 'editor' | 'viewer',
-        joined_at: item.joined_at,
-        profiles: item.profiles
+      if (!membersData || membersData.length === 0) {
+        setTeamMembers([]);
+        return;
+      }
+
+      // Then get profiles for those members
+      const userIds = membersData.map(member => member.user_id);
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, username, full_name, avatar_url, github_username')
+        .in('id', userIds);
+        
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+      }
+      
+      // Combine the data
+      const transformedData: TeamMember[] = membersData.map(member => ({
+        id: member.id,
+        team_id: member.team_id,
+        user_id: member.user_id,
+        role: member.role as 'admin' | 'editor' | 'viewer',
+        joined_at: member.joined_at,
+        profiles: profilesData?.find(profile => profile.id === member.user_id) || null
       }));
       
       setTeamMembers(transformedData);
