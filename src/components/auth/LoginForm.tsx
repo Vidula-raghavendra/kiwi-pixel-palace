@@ -1,15 +1,15 @@
-
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   function validate() {
     if (!email) return "Email required";
@@ -24,9 +24,14 @@ export default function LoginForm() {
     const v = validate();
     if (v) return setError(v);
     setLoading(true);
+
     setTimeout(() => {
-      setError("Login is just a demo! (enable auth to use)");
+      // Simulate success for demo
+      setError("");
       setLoading(false);
+      // Store user email in sessionStorage for demo purposes
+      sessionStorage.setItem("loginEmail", email);
+      navigate("/home");
     }, 500);
   };
 

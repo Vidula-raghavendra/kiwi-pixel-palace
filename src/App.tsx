@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,6 +10,8 @@ import LandingPage from "./pages/LandingPage";
 // Placeholder pages till later steps
 import LoginForm from "./components/auth/LoginForm";
 import SignupForm from "./components/auth/SignupForm";
+import Dashboard from "./components/Dashboard";
+import React from "react";
 
 const LoginPage = () => (
   <div className="min-h-[60vh] flex flex-col justify-center items-center">
@@ -20,7 +23,19 @@ const SignupPage = () => (
     <SignupForm />
   </div>
 );
-const DashboardPage = () => <div className="pixel-font min-h-[50vh] flex items-center justify-center text-2xl">[Dashboard goes here]</div>;
+const DashboardPage = () => {
+  // Try to read email from sessionStorage (demo purpose)
+  const [email, setEmail] = React.useState<string | undefined>(undefined);
+  React.useEffect(() => {
+    const stored = sessionStorage.getItem("loginEmail");
+    setEmail(stored || undefined);
+  }, []);
+  return (
+    <div className="min-h-[50vh] flex items-center justify-center">
+      <Dashboard email={email} />
+    </div>
+  );
+};
 const WorkspacePage = () => <div className="pixel-font min-h-[50vh] flex items-center justify-center text-2xl">[Workspace goes here]</div>;
 
 const queryClient = new QueryClient();
