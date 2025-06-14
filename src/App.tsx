@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +11,7 @@ import LoginForm from "./components/auth/LoginForm";
 import SignupForm from "./components/auth/SignupForm";
 import Dashboard from "./components/Dashboard";
 import React from "react";
+import WorkspaceRoom from "./components/WorkspaceRoom";
 
 const LoginPage = () => (
   <div className="min-h-[60vh] flex flex-col justify-center items-center">
@@ -36,7 +36,7 @@ const DashboardPage = () => {
     </div>
   );
 };
-const WorkspacePage = () => <div className="pixel-font min-h-[50vh] flex items-center justify-center text-2xl">[Workspace goes here]</div>;
+const WorkspacePage = () => <WorkspaceRoom />;
 
 const queryClient = new QueryClient();
 
