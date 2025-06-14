@@ -33,7 +33,7 @@ export default function KiwiWorkspace() {
     e.preventDefault();
     closeAll();
     setTimeout(() => {
-      // Navigate to the user's "room" after any action
+      // Always navigate to the user's "room" after any action
       navigate("/workspace/my-room");
     }, 500);
   }

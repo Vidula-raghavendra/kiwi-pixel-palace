@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -32,8 +31,9 @@ const Dashboard: React.FC<DashboardProps> = ({ email }) => {
         </div>
       </div>
       <div className="flex flex-row justify-center gap-5 mt-4">
+        {/* Updated: now links to /workspace/kiwi-team instead of /workspace/my-room */}
         <Button asChild className="pixel-font bg-[#badc5b] border-[#233f24] border-2 rounded-lg text-[#233f24] text-lg px-5 py-2 shadow-[0_2px_0_#ad9271] hover:brightness-95 hover:scale-105 transition-all flex flex-row items-center gap-2">
-          <Link to="/workspace/my-room">
+          <Link to="/workspace/kiwi-team">
             Enter Workspace
             <ArrowRight className="ml-1" size={20} />
           </Link>
