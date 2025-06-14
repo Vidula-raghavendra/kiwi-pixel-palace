@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Github } from 'lucide-react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 export default function AuthPage() {
   const { user, loading, signInWithGithub } = useAuth();
@@ -13,6 +13,7 @@ export default function AuthPage() {
   // Redirect authenticated users to home
   useEffect(() => {
     if (user && !loading) {
+      console.log('User is authenticated, redirecting to home');
       navigate('/home', { replace: true });
     }
   }, [user, loading, navigate]);
@@ -26,7 +27,8 @@ export default function AuthPage() {
   }
 
   if (user) {
-    return <Navigate to="/home" replace />;
+    console.log('User exists, should redirect');
+    return null; // Let the useEffect handle the redirect
   }
 
   return (
