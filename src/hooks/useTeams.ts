@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -83,7 +82,7 @@ export const useTeams = () => {
           user_id,
           role,
           joined_at,
-          profiles!inner (
+          profiles:user_id (
             username,
             full_name,
             avatar_url,
@@ -93,18 +92,7 @@ export const useTeams = () => {
         .eq('team_id', teamId);
         
       if (error) throw error;
-      
-      // Transform the data to match our interface
-      const transformedData: TeamMember[] = (data || []).map(item => ({
-        id: item.id,
-        team_id: item.team_id,
-        user_id: item.user_id,
-        role: item.role as 'admin' | 'editor' | 'viewer',
-        joined_at: item.joined_at,
-        profiles: item.profiles
-      }));
-      
-      setTeamMembers(transformedData);
+      setTeamMembers(data || []);
     } catch (error: any) {
       console.error('Error fetching team members:', error);
     }
