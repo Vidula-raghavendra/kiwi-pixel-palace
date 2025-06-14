@@ -40,7 +40,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Fetch user profile
+          // Fetch user profile after authentication
           setTimeout(async () => {
             try {
               const { data: profileData, error } = await supabase
@@ -58,6 +58,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               console.error('Profile fetch error:', err);
             }
           }, 0);
+
+          // Redirect to home after successful authentication
+          if (event === 'SIGNED_IN' && window.location.pathname === '/auth') {
+            window.location.href = '/home';
+          }
         } else {
           setProfile(null);
         }

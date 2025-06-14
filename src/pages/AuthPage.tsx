@@ -1,13 +1,21 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Github } from 'lucide-react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 
 export default function AuthPage() {
   const { user, loading, signInWithGithub } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect authenticated users to home
+  useEffect(() => {
+    if (user && !loading) {
+      navigate('/home', { replace: true });
+    }
+  }, [user, loading, navigate]);
 
   if (loading) {
     return (
