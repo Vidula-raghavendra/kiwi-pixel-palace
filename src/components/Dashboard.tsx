@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -21,7 +20,7 @@ const Dashboard: React.FC = () => {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   
-  // Always call useTeams at the top level - never conditionally
+  // CRITICAL: All hooks must be called at the top level - NEVER conditionally
   const { createTeam, joinTeam, loading, teams, currentTeam } = useTeams();
   
   const [modal, setModal] = React.useState(modalDefaults);
@@ -36,9 +35,13 @@ const Dashboard: React.FC = () => {
   });
   const [errorMsg, setErrorMsg] = React.useState("");
 
-  // Early return after all hooks are called
+  // Early return AFTER all hooks are called
   if (!user) {
-    return null;
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-[#e2fde4]">
+        <div className="pixel-font text-lg text-[#233f24]">Loading...</div>
+      </div>
+    );
   }
 
   const displayName = profile?.full_name || profile?.github_username || user?.email || 'User';
