@@ -432,6 +432,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      generate_team_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       is_team_member: {
         Args: { _user_id: string; _team_id: string }
         Returns: boolean

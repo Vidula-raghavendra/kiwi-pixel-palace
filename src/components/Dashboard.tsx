@@ -155,18 +155,30 @@ function TeamCodeModal({ open, onClose, code }: { open: boolean, onClose: () => 
   React.useEffect(() => { if (!open) setCopied(false); }, [open]);
   return (
     <Dialog open={open} onOpenChange={o => { if (!o) onClose(); }}>
-      <DialogContent>
-        <DialogTitle className="pixel-font text-[#233f24]">Team Join Code</DialogTitle>
-        <div className="text-sm text-[#233f24] mb-3">
-          Share this code with your teammates to let them join your team:
+      <DialogContent className="flex flex-col items-center justify-center">
+        <DialogTitle className="pixel-font text-[#233f24] text-center text-2xl mb-0">
+          Team Join Code
+        </DialogTitle>
+        <div className="text-base text-[#233f24] my-3 text-center max-w-[320px]">
+          Share this code with your teammates to let them join your team!
         </div>
-        <div className="flex items-center gap-2 mb-3">
-          <Input readOnly value={code} className="pixel-font text-lg" />
-          <Button onClick={handleCopy} className="bg-[#badc5b] text-[#233f24] flex gap-1 rounded px-2 py-2">
-            {copied ? <CopyCheck size={16} /> : <Copy size={16} />}
+        <div className="flex flex-col gap-2 items-center my-3 w-full">
+          <Input 
+            readOnly 
+            value={code} 
+            className="pixel-font text-2xl tracking-widest border-2 border-[#ad9271] text-center bg-[#fffbe8] px-6 py-3 max-w-[320px] mb-2"
+            style={{ fontSize: "2.1rem", letterSpacing: "0.16em" }}
+          />
+          <Button 
+            onClick={handleCopy} 
+            className="bg-[#badc5b] text-[#233f24] flex gap-2 rounded px-5 py-2 text-lg font-semibold pixel-font"
+            style={{ fontSize: "1.18rem" }}
+          >
+            {copied ? <CopyCheck size={19} /> : <Copy size={19} />}
+            {copied ? "Copied!" : "Copy Code"}
           </Button>
         </div>
-        <Button onClick={onClose} className="w-full pixel-font bg-[#badc5b] text-[#233f24]">
+        <Button onClick={onClose} className="w-full pixel-font bg-[#badc5b] text-[#233f24] mt-3 text-lg">
           Done
         </Button>
       </DialogContent>
