@@ -1,73 +1,156 @@
-# Welcome to your Lovable project
+Kiwi – Team Collaboration Web App
+Kiwi is a playful, pixel-art inspired, AI-powered team collaboration platform. It combines robust team management, real-time chat, dual LLM assistants, and a unique blend of soft 3D and pixel UI, all built on a modern stack with Supabase and React.
 
-## Project info
+Features
+Authentication: OAuth via GitHub and Google, session management, and auto-profile fetch (Supabase Auth)
 
-**URL**: https://lovable.dev/projects/fc1b5d37-d240-442e-b207-375be27148dd
+Team Collaboration:
 
-## How can I edit this code?
+Create teams, join via code, or invite members by email/GitHub
 
-There are several ways of editing your application.
+Unique team codes for easy onboarding
 
-**Use Lovable**
+Member roles (admin, viewer, etc.)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/fc1b5d37-d240-442e-b207-375be27148dd) and start prompting.
+Real-time updates via Supabase listeners
 
-Changes made via Lovable will be committed automatically to this repo.
+Dual LLM Chat System:
 
-**Use your preferred IDE**
+Each workspace offers two AI assistants (Gemini, GPT, or both)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Real-time, side-by-side chat panels for each user
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Drag-to-clone conversation threads between panels
 
-Follow these steps:
+Pixel Art + Soft 3D Design:
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Responsive layout, mascot animation, animated modals (Framer Motion)
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+Sidebar with team info and actions
 
-# Step 3: Install the necessary dependencies.
-npm i
+To-do panel for workspace notes (basic CRUD)
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+Extra Features:
+
+Export chat as PDF
+
+Dark mode toggle
+
+Custom workspace themes
+
+404 and loading screens with mascot and pixel effects
+
+Tech Stack
+Frontend: React, TailwindCSS, Framer Motion, ShadCN, Zustand (or Redux)
+
+Backend: Node.js + Express or Supabase Edge Functions
+
+Database: Supabase (PostgreSQL)
+
+Auth: Supabase Auth (OAuth)
+
+LLM Integration: Google Gemini & OpenAI GPT APIs
+
+UI: Pixel art & soft 3D, custom mascot (Lottie/Storyblocks)
+
+Pages & Routing
+/ – Animated landing page with mascot and call-to-action
+
+/login – OAuth login (GitHub, Google)
+
+/signup – Optional email/password signup
+
+/home – User dashboard: create/join/invite teams
+
+/workspace/:teamId – Main team workspace: chat, to-dos, sidebar
+
+* – Custom 404 pixel-art error page
+
+Database Schema (Supabase)
+users: id, email, github_id, name, avatar
+
+teams: id, name, team_code, created_by
+
+team_members: id, team_id, user_id, role
+
+invites: id, team_id, email/github, status
+
+messages: id, user_id, llm_type, team_id, message, timestamp
+
+Setup & Installation
+Prerequisites
+Node.js (v18+ recommended)
+
+Supabase account & project
+
+API keys for Gemini and OpenAI (optional, for AI chat)
+
+1. Clone the Repository
+bash
+Copy
+Edit
+git clone https://github.com/yourusername/kiwi-collab.git
+cd kiwi-collab
+2. Install Dependencies
+bash
+Copy
+Edit
+npm install
+3. Environment Variables
+Create a .env file based on .env.example:
+
+ini
+Copy
+Edit
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_anon_key
+VITE_OPENAI_API_KEY=your_openai_key
+VITE_GEMINI_API_KEY=your_gemini_key
+4. Configure Supabase
+Set up the database schema (see above).
+
+Enable Auth providers (GitHub, Google) in Supabase Dashboard.
+
+Add your site and local URLs as Auth redirect URIs.
+
+5. Run the App
+bash
+Copy
+Edit
 npm run dev
-```
+Visit http://localhost:5173 in your browser.
 
-**Edit a file directly in GitHub**
+6. Deploy
+Deploy to Vercel or Netlify for production.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Customization
+Update mascot animations and backgrounds in public/assets or via Lottie/Storyblocks links.
 
-**Use GitHub Codespaces**
+To add more LLMs, configure API endpoints in the backend and adjust the workspace UI as needed.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Edit Tailwind config and pixel/3D styles in /src/styles for branding.
 
-## What technologies are used for this project?
+Assets
+Mascot and loading animations: Use Lottie or Storyblocks, or customize in /public/assets.
 
-This project is built with:
+Pixel textures: Place under /public/assets/pixels and reference in Tailwind/JSX.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Contributing
+Fork this repo
 
-## How can I deploy this project?
+Create your feature branch (git checkout -b feature/your-feature)
 
-Simply open [Lovable](https://lovable.dev/projects/fc1b5d37-d240-442e-b207-375be27148dd) and click on Share -> Publish.
+Commit your changes (git commit -am 'Add new feature')
 
-## Can I connect a custom domain to my Lovable project?
+Push to the branch (git push origin feature/your-feature)
 
-Yes, you can!
+Open a pull request
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+License
+MIT
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Credits
+Pixel and mascot art via Storyblocks or custom Lottie
+
+Powered by Supabase, , Google Gemini
+
