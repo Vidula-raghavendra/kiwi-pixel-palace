@@ -15,15 +15,36 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Validate key
+  if (!GEMINI_API_KEY) {
+    console.error("[Gemini] No GEMINI_API_KEY found.");
+    return new Response(
+      JSON.stringify({ error: "Gemini API key is missing from server configuration." }),
+      { status: 500, headers: corsHeaders }
+    );
+  }
+
+  let prompt;
   try {
-    const { prompt } = await req.json();
+    const json = await req.json();
+    prompt = json.prompt;
+  } catch {
+    return new Response(JSON.stringify({ error: "Malformed JSON payload." }), {
+      status: 400,
+      headers: corsHeaders,
+    });
+  }
 
-    if (!prompt) {
-      return new Response(JSON.stringify({ error: "No prompt provided" }), { status: 400, headers: corsHeaders });
-    }
+  if (!prompt) {
+    return new Response(
+      JSON.stringify({ error: "No prompt provided" }),
+      { status: 400, headers: corsHeaders }
+    );
+  }
 
-    // Log the payload for tracing
-    console.log("Gemini request prompt:", prompt);
+  try {
+    // Log request for debugging
+    console.log("Gemini-direct: sending prompt:", prompt);
 
     const geminiResponse = await fetch(
       GEMINI_API_ENDPOINT,
@@ -36,25 +57,65 @@ serve(async (req) => {
       }
     );
 
-    const geminiData = await geminiResponse.json();
+    const status = geminiResponse.status;
+    const body = await geminiResponse.text();
+    let parsed;
+    try {
+      parsed = JSON.parse(body);
+    } catch {
+      parsed = null;
+    }
 
-    // Log the raw response for debugging
-    console.log("Gemini raw response:", JSON.stringify(geminiData));
+    // Log raw Gemini API response for troubleshooting
+    console.log(
+      "Gemini-direct: Gemini API status:",
+      status,
+      "body:",
+      body
+    );
 
-    const result =
-      geminiData.candidates?.[0]?.content?.parts?.[0]?.text ||
-      geminiData.candidates?.[0]?.content?.text ||
-      geminiData.candidates?.[0]?.output ||
-      null;
+    // Success: try to extract text
+    if (geminiResponse.ok && parsed) {
+      const result =
+        parsed.candidates?.[0]?.content?.parts?.[0]?.text ||
+        parsed.candidates?.[0]?.content?.text ||
+        parsed.candidates?.[0]?.output ||
+        null;
 
-    return new Response(JSON.stringify({ result, raw: geminiData }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+      if (result) {
+        return new Response(JSON.stringify({ result, raw: parsed }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      } else {
+        return new Response(
+          JSON.stringify({
+            error: "No candidate text in Gemini response.",
+            status,
+            raw: parsed,
+          }),
+          { status: 502, headers: corsHeaders }
+        );
+      }
+    }
+
+    // If we have an error, include everything we know
+    return new Response(
+      JSON.stringify({
+        error:
+          parsed?.error?.message || "Gemini API returned error or unknown format.",
+        status,
+        raw: parsed ?? body,
+      }),
+      { status: 502, headers: corsHeaders }
+    );
   } catch (err) {
     console.error("Gemini Direct error:", err);
-    return new Response(JSON.stringify({ error: "Gemini API call failed", detail: String(err) }), {
-      status: 500,
-      headers: corsHeaders,
-    });
+    return new Response(
+      JSON.stringify({ error: "Gemini API call failed", detail: String(err) }),
+      {
+        status: 500,
+        headers: corsHeaders,
+      }
+    );
   }
 });

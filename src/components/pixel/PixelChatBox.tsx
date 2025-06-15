@@ -44,12 +44,23 @@ export default function PixelChatBox() {
         }
       );
       const data = await res.json();
+
       if (data?.result) {
         setMessages((msgs) => [...msgs, { sender: "ai", text: data.result }]);
       } else if (data?.error) {
+        // Always show error, raw, and status for debugging.
         setMessages((msgs) => [
           ...msgs,
-          { sender: "ai", text: "Sorry, there was an error: " + String(data.error) },
+          {
+            sender: "ai",
+            text:
+              "There was an error from the AI:\n" +
+              (data.error ? "Error: " + data.error + "\n" : "") +
+              (data.status ? "Status: " + data.status + "\n" : "") +
+              (data.raw
+                ? "Gemini's response:\n" + JSON.stringify(data.raw, null, 2)
+                : ""),
+          },
         ]);
       } else if (data?.raw) {
         setMessages((msgs) => [
@@ -57,14 +68,14 @@ export default function PixelChatBox() {
           {
             sender: "ai",
             text:
-              "No response from AI. Raw Gemini output:\n" +
+              "No clear response from AI. Raw Gemini output:\n" +
               JSON.stringify(data.raw, null, 2),
           },
         ]);
       } else {
         setMessages((msgs) => [
           ...msgs,
-          { sender: "ai", text: "No response from AI." },
+          { sender: "ai", text: "No response from AI and no error details." },
         ]);
       }
     } catch (err: any) {
@@ -76,6 +87,7 @@ export default function PixelChatBox() {
         },
       ]);
     }
+
     setLoading(false);
     inputRef.current?.focus();
   }
