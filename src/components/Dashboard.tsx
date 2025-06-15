@@ -1,107 +1,17 @@
+
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ArrowLeft, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useTeams } from "@/hooks/useTeams";
-import DashboardCards from "./DashboardCards";
-import { TeamModals } from "./TeamModals";
 
 const statCard =
   "flex flex-col items-center justify-center bg-[#fffdf3] border-2 border-[#ad9271] rounded-lg shadow-[0_2px_0_#ad9271] px-6 py-4 min-w-[120px] min-h-[88px] pixel-font font-semibold text-lg text-[#233f24]";
 
-const modalDefaults = {
-  project: { open: false },
-  team: { open: false },
-  invite: { open: false },
-};
-
 const Dashboard: React.FC = () => {
   const { user, profile, signOut } = useAuth();
-  const navigate = useNavigate();
-  
-  // CRITICAL: All hooks must be called at the top level - NEVER conditionally
-  const { createTeam, joinTeam, loading, teams, currentTeam } = useTeams();
-  
-  const [modal, setModal] = React.useState(modalDefaults);
-  const [formData, setFormData] = React.useState({
-    projectName: '',
-    projectDesc: '',
-    teamName: '',
-    teamDesc: '',
-    teamPassword: '',
-    inviteCode: '',
-    teamJoinPassword: ''
-  });
-  const [errorMsg, setErrorMsg] = React.useState("");
-
-  // Early return AFTER all hooks are called
-  if (!user) {
-    return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-[#e2fde4]">
-        <div className="pixel-font text-lg text-[#233f24]">Loading...</div>
-      </div>
-    );
-  }
 
   const displayName = profile?.full_name || profile?.github_username || user?.email || 'User';
-
-  function handleCard(card: "project" | "team" | "invite") {
-    setErrorMsg("");
-    setModal({ ...modalDefaults, [card]: { open: true } });
-  }
-
-  function closeAll() {
-    setModal(modalDefaults);
-    setFormData({
-      projectName: '',
-      projectDesc: '',
-      teamName: '',
-      teamDesc: '',
-      teamPassword: '',
-      inviteCode: '',
-      teamJoinPassword: ''
-    });
-    setErrorMsg("");
-  }
-
-  async function submitCreateTeam(e: React.FormEvent) {
-    e.preventDefault();
-    setErrorMsg("");
-    try {
-      console.log('Creating team:', formData.teamName);
-      const newTeam = await createTeam(formData.teamName, formData.teamDesc, formData.teamPassword);
-      console.log('Team created successfully:', newTeam);
-      closeAll();
-      navigate(`/workspace/${newTeam.id}`);
-    } catch (error: any) {
-      console.error('Error creating team:', error);
-      setErrorMsg(error?.message || "Error creating team. Please try again.");
-    }
-  }
-
-  async function submitJoinTeam(e: React.FormEvent) {
-    e.preventDefault();
-    setErrorMsg("");
-    try {
-      console.log('Joining team with code:', formData.inviteCode);
-      const joinedTeam = await joinTeam(formData.inviteCode, formData.teamJoinPassword);
-      console.log('Team joined successfully:', joinedTeam);
-      closeAll();
-      navigate(`/workspace/${joinedTeam.id}`);
-    } catch (error: any) {
-      console.error('Error joining team:', error);
-      setErrorMsg(error?.message || "Error joining team. Please try again.");
-    }
-  }
-
-  function submitInvite(e: React.FormEvent) {
-    e.preventDefault();
-    closeAll();
-    if (currentTeam) {
-      navigate(`/workspace/${currentTeam.id}`);
-    }
-  }
 
   return (
     <div className="w-full h-full flex flex-col items-center py-10 gap-8 animate-fade-in">
@@ -144,26 +54,14 @@ const Dashboard: React.FC = () => {
           <span className="mt-2 text-[#7b6449]">Quests Completed: 7</span>
         </div>
       </div>
-
-      <div className="w-full max-w-2xl">
-        <DashboardCards
-          openCreate={() => handleCard("team")}
-          openJoin={() => handleCard("invite")}
-          openInvite={() => handleCard("invite")}
-          loading={loading}
-        />
-      </div>
       
       <div className="flex flex-row justify-center gap-5 mt-4">
-        {teams && teams.length > 0 && currentTeam && (
-          <Button 
-            className="pixel-font bg-[#badc5b] border-[#233f24] border-2 rounded-lg text-[#233f24] text-lg px-5 py-2 shadow-[0_2px_0_#ad9271] hover:brightness-95 hover:scale-105 transition-all flex flex-row items-center gap-2"
-            onClick={() => navigate(`/workspace/${currentTeam.id}`)}
-          >
+        <Button asChild className="pixel-font bg-[#badc5b] border-[#233f24] border-2 rounded-lg text-[#233f24] text-lg px-5 py-2 shadow-[0_2px_0_#ad9271] hover:brightness-95 hover:scale-105 transition-all flex flex-row items-center gap-2">
+          <Link to="/workspace/kiwi-team">
             Enter Workspace
             <ArrowRight className="ml-1" size={20} />
-          </Button>
-        )}
+          </Link>
+        </Button>
         <Button asChild variant="secondary" className="pixel-font text-lg flex flex-row items-center gap-2">
           <Link to="/">
             <ArrowLeft className="mr-1" size={20} />
@@ -182,17 +80,6 @@ const Dashboard: React.FC = () => {
           </ul>
         </div>
       </div>
-
-      <TeamModals
-        modal={modal}
-        closeAll={closeAll}
-        loading={loading}
-        formData={formData}
-        setFormData={setFormData}
-        submitCreateTeam={submitCreateTeam}
-        submitJoinTeam={submitJoinTeam}
-        errorMsg={errorMsg}
-      />
     </div>
   );
 };

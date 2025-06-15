@@ -17,7 +17,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 
 const DashboardPage = () => {
   return (
-    <div className="min-h-screen w-full bg-[#e2fde4] flex items-center justify-center">
+    <div className="min-h-[50vh] flex items-center justify-center">
       <Dashboard />
     </div>
   );
@@ -25,19 +25,6 @@ const DashboardPage = () => {
 
 const WorkspacePage = () => <KiwiWorkspace />;
 const WorkspaceRoomPage = () => <WorkspaceRoom />;
-
-function NotFoundOrInvalidWorkspace() {
-  return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-[#e2fde4]">
-      <div className="pixel-font text-red-700 text-lg">
-        Invalid workspace route or context.<br />
-        <span className="text-xs text-[#ad9271]">
-          Try reloading or return to <a href="/home" className="underline">dashboard</a>.
-        </span>
-      </div>
-    </div>
-  );
-}
 
 const queryClient = new QueryClient();
 
@@ -58,14 +45,16 @@ const App = () => (
                 <DashboardPage />
               </ProtectedRoute>
             } />
-            {/* Dynamic workspace routes for team IDs */}
             <Route path="/workspace/:id" element={
+              <ProtectedRoute>
+                <WorkspacePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/workspace/my-room" element={
               <ProtectedRoute>
                 <WorkspaceRoomPage />
               </ProtectedRoute>
             } />
-            {/* Fallback for any other unknown workspace route */}
-            <Route path="/workspace/*" element={<NotFoundOrInvalidWorkspace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

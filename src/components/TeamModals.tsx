@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,9 +31,6 @@ export function TeamModals({
         <DialogContent className="pixel-outline bg-[#fffde8] !rounded-lg shadow-2xl max-w-md z-[100]">
           <DialogHeader>
             <DialogTitle className="pixel-font text-[#8bb47e]">Create New Team</DialogTitle>
-            <DialogDescription className="pixel-font text-[#7b6449] text-sm">
-              Create a new team to start collaborating with others.
-            </DialogDescription>
           </DialogHeader>
           <form className="flex flex-col gap-4 mt-4" onSubmit={submitCreateTeam}>
             <Input
@@ -81,9 +78,6 @@ export function TeamModals({
         <DialogContent className="pixel-outline bg-[#fffde8] !rounded-lg shadow-2xl max-w-md z-[100]">
           <DialogHeader>
             <DialogTitle className="pixel-font text-[#badc5b]">Join Team</DialogTitle>
-            <DialogDescription className="pixel-font text-[#7b6449] text-sm">
-              Enter a team code to join an existing team.
-            </DialogDescription>
           </DialogHeader>
           <form className="flex flex-col gap-4 mt-4" onSubmit={submitJoinTeam}>
             <Input

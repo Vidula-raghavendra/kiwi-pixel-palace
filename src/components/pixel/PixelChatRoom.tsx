@@ -1,6 +1,9 @@
 
 import React, { useState, useRef, useEffect } from "react";
-import { Team } from "@/hooks/useTeams";
+
+type Team = {
+  members: { name: string; role: string }[];
+};
 
 type Message = {
   user: string;

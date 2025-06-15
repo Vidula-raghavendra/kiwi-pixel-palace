@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -9,8 +10,10 @@ export default function AuthPage() {
   const { user, loading, signInWithGithub } = useAuth();
   const navigate = useNavigate();
 
+  // Redirect authenticated users to home
   useEffect(() => {
     if (user && !loading) {
+      console.log('User is authenticated, redirecting to home');
       navigate('/home', { replace: true });
     }
   }, [user, loading, navigate]);
@@ -24,7 +27,8 @@ export default function AuthPage() {
   }
 
   if (user) {
-    return null;
+    console.log('User exists, should redirect');
+    return null; // Let the useEffect handle the redirect
   }
 
   return (
