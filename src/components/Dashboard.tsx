@@ -312,31 +312,39 @@ const Dashboard: React.FC = () => {
       )}
 
       {/* Start a new project */}
-      <div className="w-full max-w-lg mt-10 mb-6 p-7 rounded-lg border-2 border-[#ad9271] bg-[#fffdf3] shadow-[0_2px_0_#ad9271] flex flex-col items-center gap-2">
-        <div className="pixel-font text-lg mb-3 text-[#233f24]">Start a New Project</div>
-        <form onSubmit={handleCreateTeam} className="flex flex-col gap-3 w-full">
+      <div className="w-full max-w-lg mt-12 mb-8 p-10 rounded-lg border-2 border-[#ad9271] bg-[#fffdf3] shadow-[0_2px_0_#ad9271] flex flex-col items-center gap-4"
+        style={{ minHeight: 310, justifyContent: "center" }}
+      >
+        <div className="pixel-font text-2xl mb-4 text-[#233f24]">Start a New Project</div>
+        <form onSubmit={handleCreateTeam} className="flex flex-col gap-5 w-full items-center">
           <Input
-            className="pixel-font"
+            className="pixel-font text-lg px-5 py-3"
             placeholder="Workspace/Team Name"
             value={teamName}
             onChange={e => setTeamName(e.target.value)}
             required
             maxLength={48}
             disabled={creating}
+            style={{ fontSize: "1.08rem" }}
           />
           <Input
-            className="pixel-font"
+            className="pixel-font text-md px-5 py-2"
             placeholder="Description (optional)"
             value={teamDesc}
             onChange={e => setTeamDesc(e.target.value)}
             maxLength={100}
             disabled={creating}
+            style={{ fontSize: "1rem" }}
           />
-          {errorMsg && <div className="text-red-500 pixel-font">{errorMsg}</div>}
+          {errorMsg && <div className="text-red-500 pixel-font text-base">{errorMsg}</div>}
           <Button
             disabled={creating || !teamName}
             type="submit"
-            className="pixel-font bg-[#badc5b] text-[#233f24] mt-3"
+            className="pixel-font bg-[#badc5b] text-[#233f24] mt-4 text-lg px-7 py-3"
+            style={{
+              fontSize: "1.15rem",
+              minHeight: "48px",
+            }}
           >
             {creating ? "Creating..." : "Create Team"}
           </Button>
