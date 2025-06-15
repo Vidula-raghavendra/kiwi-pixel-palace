@@ -33,38 +33,38 @@ function SidebarSection({ label, icon, children }: { label: string, icon: React.
 }
 
 export default function WorkspaceSidebar() {
-  // Defensive: check that AuthProvider is mounted
-  let profile, signOut, authLoading;
+  // Defensive: handle context errors visually
+  let profile, signOut, authLoading, errorMsg = "";
   try {
     const auth = useAuth();
     profile = auth.profile;
     signOut = auth.signOut;
     authLoading = auth.loading;
   } catch (e) {
-    // AuthProvider isn't mounted
-    return (
-      <aside className="bg-[#fffde8] border-r border-[#badc5b] min-w-[250px] max-w-[270px] flex flex-col justify-center items-center h-screen z-30 shadow-lg">
-        <span className="pixel-font text-red-500 text-sm mt-10">
-          Account system not loaded. Please reload or contact support.
-        </span>
-      </aside>
-    );
+    errorMsg = (e as Error)?.message || "Account context missing.";
   }
 
   let teams, currentTeam, setCurrentTeam, teamMembers, fetchTeamMembers, loading;
-  try {
-    const teamHook = useTeams();
-    teams = teamHook.teams;
-    currentTeam = teamHook.currentTeam;
-    setCurrentTeam = teamHook.setCurrentTeam;
-    teamMembers = teamHook.teamMembers;
-    fetchTeamMembers = teamHook.fetchTeamMembers;
-    loading = teamHook.loading;
-  } catch (e) {
+  if (!errorMsg) {
+    try {
+      const teamHook = useTeams();
+      teams = teamHook.teams;
+      currentTeam = teamHook.currentTeam;
+      setCurrentTeam = teamHook.setCurrentTeam;
+      teamMembers = teamHook.teamMembers;
+      fetchTeamMembers = teamHook.fetchTeamMembers;
+      loading = teamHook.loading;
+    } catch (e) {
+      errorMsg = (e as Error)?.message || "Team context missing.";
+    }
+  }
+
+  if (errorMsg) {
     return (
       <aside className="bg-[#fffde8] border-r border-[#badc5b] min-w-[250px] max-w-[270px] flex flex-col justify-center items-center h-screen z-30 shadow-lg">
-        <span className="pixel-font text-red-500 text-sm mt-10">
-          Team system not loaded. Please reload or contact support.<br/>{String(e)}
+        <span className="pixel-font text-red-500 text-base mt-10">
+          {errorMsg} <br />
+          <span className="text-xs text-[#ad9271]">(WorkspaceSidebar)</span>
         </span>
       </aside>
     );

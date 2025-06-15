@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -9,31 +10,26 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTeams } from "@/hooks/useTeams";
 
 export default function WorkspaceRoom() {
-  // Defensive: check AuthProvider and Team Provider
-  let userOrTeamsOk = true;
+  let auth, teams;
+  let errorMsg = "";
   try {
-    useAuth();
-    useTeams();
+    auth = useAuth();
+    teams = useTeams();
   } catch (e) {
-    userOrTeamsOk = false;
+    errorMsg = (e as Error)?.message || "Critical error loading account or teams.";
   }
 
-  if (!userOrTeamsOk) {
+  // Catch *ALL* errors, show user-friendly fallback, never a blank screen.
+  if (errorMsg) {
     return (
       <div className="flex flex-col min-h-screen w-full items-center justify-center bg-[#e2fde4]">
         <div className="pixel-font text-red-600 text-lg">
-          Account or Team system not loaded.<br/>
-          Please reload or contact support.
+          {errorMsg}<br />
+          <span className="text-xs text-[#ad9271]">Please reload or contact support. (WorkspaceRoom)</span>
         </div>
       </div>
     );
   }
-
-  // Defensive render: Render everything, but show a message if there is no valid team context.
-  // We keep the rest of the layout for user experience.
-
-  // You can use context here if needed, but the main thing is no crash if missing team.
-  // Optionally: show a message about missing team.
 
   return (
     <div className="relative w-full min-h-screen bg-[#e2fde4] flex flex-row">
