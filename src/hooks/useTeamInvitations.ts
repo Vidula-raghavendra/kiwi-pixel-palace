@@ -47,6 +47,7 @@ export function useTeamInvitations(teamId?: string) {
     invited_by,
   }: { team_id: string, email?: string, github_username?: string, invited_by: string }) => {
     setLoading(true);
+    // All required fields for table: invited_by, team_id, and one of email/github_username
     const insertObj = {
       team_id,
       email: email || null,

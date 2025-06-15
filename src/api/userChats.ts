@@ -36,10 +36,20 @@ export async function upsertUserChat(chat: {
   created_at?: string;
   id?: string;
 }) {
-  // Cast as required by TS: must be an array, with thread provided!
+  // Ensure 'thread', 'user_id', and 'team_id' are always present
+  const upsertObj = {
+    user_id: chat.user_id,
+    team_id: chat.team_id,
+    thread: chat.thread,
+    llm_provider: chat.llm_provider,
+    last_used_at: chat.last_used_at,
+    updated_at: chat.updated_at,
+    created_at: chat.created_at,
+    id: chat.id,
+  };
   const { data, error } = await supabase
     .from("user_chats")
-    .upsert([chat], { onConflict: "user_id,team_id" })
+    .upsert([upsertObj], { onConflict: "user_id,team_id" })
     .select()
     .single();
   if (error) throw error;
