@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from "react";
 import { ChatBubbleIcon, PixelGem } from "./PixelIcons";
 
@@ -34,10 +33,10 @@ export default function PixelChatBox() {
     setInput("");
     setLoading(true);
 
-    // Call Gemini via Supabase Edge Function
+    // Call Gemini DIRECT via Supabase Edge Function
     try {
       const res = await fetch(
-        "https://wuetwwdfqellisyxpivr.supabase.co/functions/v1/gemini",
+        "https://wuetwwdfqellisyxpivr.supabase.co/functions/v1/gemini-direct",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
