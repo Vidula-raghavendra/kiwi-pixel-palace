@@ -90,9 +90,10 @@ export default function WorkspaceSidebar() {
     loading: teamPanelLoading,
   } = useTeamSidebarPanel({ teamId: currentTeam?.id || "" });
 
-  // Set current team on load
+  // Instead of redirecting as soon as we can't find the team,
+  // wait for teams loading to finish before attempting to redirect.
   React.useEffect(() => {
-    if (id && allTeams) {
+    if (id && allTeams && !loading) {
       const team = allTeams.find((team) => team.id === id);
       if (team) {
         setCurrentTeam(team);
@@ -106,7 +107,8 @@ export default function WorkspaceSidebar() {
         }, 1500);
       }
     }
-  }, [id, allTeams, setCurrentTeam, navigate, toast]);
+    // eslint-disable-next-line
+  }, [id, allTeams, loading, setCurrentTeam, navigate, toast]);
 
   async function handleCreateProject() {
     if (!currentTeam) return;
