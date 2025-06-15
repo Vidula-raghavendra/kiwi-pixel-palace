@@ -1,17 +1,100 @@
 
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ArrowLeft, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTeams } from "@/hooks/useTeams";
+import DashboardCards from "./DashboardCards";
+import { TeamModals } from "./TeamModals";
 
 const statCard =
   "flex flex-col items-center justify-center bg-[#fffdf3] border-2 border-[#ad9271] rounded-lg shadow-[0_2px_0_#ad9271] px-6 py-4 min-w-[120px] min-h-[88px] pixel-font font-semibold text-lg text-[#233f24]";
 
+const modalDefaults = {
+  project: { open: false },
+  team: { open: false },
+  invite: { open: false },
+};
+
 const Dashboard: React.FC = () => {
   const { user, profile, signOut } = useAuth();
+  const { createTeam, joinTeam, loading, teams, currentTeam } = useTeams();
+  const navigate = useNavigate();
+  
+  const [modal, setModal] = React.useState(modalDefaults);
+  const [formData, setFormData] = React.useState({
+    projectName: '',
+    projectDesc: '',
+    teamName: '',
+    teamDesc: '',
+    teamPassword: '',
+    inviteCode: '',
+    teamJoinPassword: ''
+  });
+  const [errorMsg, setErrorMsg] = React.useState("");
 
   const displayName = profile?.full_name || profile?.github_username || user?.email || 'User';
+
+  function handleCard(card: "project" | "team" | "invite") {
+    setErrorMsg("");
+    setModal({ ...modalDefaults, [card]: { open: true } });
+  }
+
+  function closeAll() {
+    setModal(modalDefaults);
+    setFormData({
+      projectName: '',
+      projectDesc: '',
+      teamName: '',
+      teamDesc: '',
+      teamPassword: '',
+      inviteCode: '',
+      teamJoinPassword: ''
+    });
+    setErrorMsg("");
+  }
+
+  async function submitCreateTeam(e: React.FormEvent) {
+    e.preventDefault();
+    setErrorMsg("");
+    try {
+      const newTeam = await createTeam(formData.teamName, formData.teamDesc, formData.teamPassword);
+      closeAll();
+      // Navigate to the new team's workspace
+      setTimeout(() => {
+        navigate(`/workspace/${newTeam.id}`);
+      }, 500);
+    } catch (error: any) {
+      setErrorMsg(error?.message || "Error creating team. Please try again.");
+    }
+  }
+
+  async function submitJoinTeam(e: React.FormEvent) {
+    e.preventDefault();
+    setErrorMsg("");
+    try {
+      const joinedTeam = await joinTeam(formData.inviteCode, formData.teamJoinPassword);
+      closeAll();
+      // Navigate to the joined team's workspace
+      setTimeout(() => {
+        navigate(`/workspace/${joinedTeam.id}`);
+      }, 500);
+    } catch (error: any) {
+      setErrorMsg(error?.message || "Error joining team. Please try again.");
+    }
+  }
+
+  function submitInvite(e: React.FormEvent) {
+    e.preventDefault();
+    closeAll();
+    // If user has teams, go to current team workspace
+    if (currentTeam) {
+      setTimeout(() => {
+        navigate(`/workspace/${currentTeam.id}`);
+      }, 500);
+    }
+  }
 
   return (
     <div className="w-full h-full flex flex-col items-center py-10 gap-8 animate-fade-in">
@@ -54,14 +137,27 @@ const Dashboard: React.FC = () => {
           <span className="mt-2 text-[#7b6449]">Quests Completed: 7</span>
         </div>
       </div>
+
+      <div className="w-full max-w-2xl">
+        <DashboardCards
+          openCreate={() => handleCard("team")}
+          openJoin={() => handleCard("invite")}
+          openInvite={() => handleCard("invite")}
+          loading={loading}
+        />
+      </div>
       
       <div className="flex flex-row justify-center gap-5 mt-4">
-        <Button asChild className="pixel-font bg-[#badc5b] border-[#233f24] border-2 rounded-lg text-[#233f24] text-lg px-5 py-2 shadow-[0_2px_0_#ad9271] hover:brightness-95 hover:scale-105 transition-all flex flex-row items-center gap-2">
-          <Link to="/workspace/kiwi-team">
+        {/* Show enter workspace button if user has teams */}
+        {teams && teams.length > 0 && currentTeam && (
+          <Button 
+            className="pixel-font bg-[#badc5b] border-[#233f24] border-2 rounded-lg text-[#233f24] text-lg px-5 py-2 shadow-[0_2px_0_#ad9271] hover:brightness-95 hover:scale-105 transition-all flex flex-row items-center gap-2"
+            onClick={() => navigate(`/workspace/${currentTeam.id}`)}
+          >
             Enter Workspace
             <ArrowRight className="ml-1" size={20} />
-          </Link>
-        </Button>
+          </Button>
+        )}
         <Button asChild variant="secondary" className="pixel-font text-lg flex flex-row items-center gap-2">
           <Link to="/">
             <ArrowLeft className="mr-1" size={20} />
@@ -80,6 +176,17 @@ const Dashboard: React.FC = () => {
           </ul>
         </div>
       </div>
+
+      <TeamModals
+        modal={modal}
+        closeAll={closeAll}
+        loading={loading}
+        formData={formData}
+        setFormData={setFormData}
+        submitCreateTeam={submitCreateTeam}
+        submitJoinTeam={submitJoinTeam}
+        errorMsg={errorMsg}
+      />
     </div>
   );
 };

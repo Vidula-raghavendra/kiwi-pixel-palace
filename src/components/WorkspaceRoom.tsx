@@ -41,8 +41,8 @@ export default function WorkspaceRoom() {
     console.error("WorkspaceRoom errored:", errorMsg, e);
   }
 
-  // Loading state
-  if (!errorMsg && (!auth || !teams || teams.loading)) {
+  // Loading state - be more permissive
+  if (!errorMsg && (!auth || !teams)) {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#e2fde4]">
         <div className="pixel-font text-lg text-[#233f24]">Loading workspace...</div>
@@ -65,7 +65,7 @@ export default function WorkspaceRoom() {
     );
   }
 
-  // If user isn't member of any team, edge case
+  // If user isn't member of any team, redirect to home
   if (!teams.teams || teams.teams.length === 0) {
     return (
       <div className="flex flex-col min-h-screen w-full items-center justify-center bg-[#e2fde4]">
@@ -79,6 +79,9 @@ export default function WorkspaceRoom() {
     );
   }
 
+  // Use current team or fallback to first team
+  const displayTeam = currentTeam || teams.teams[0];
+
   return (
     <div className="relative w-full min-h-screen bg-[#e2fde4] flex flex-row">
       <WorkspaceSidebar />
@@ -87,12 +90,10 @@ export default function WorkspaceRoom() {
           <Button
             variant="secondary"
             className="pixel-font text-[#233f24] flex flex-row items-center gap-2 px-5 py-2 border-[#233f24] border-2 rounded-lg shadow-[0_2px_0_#ad9271] hover:brightness-95 hover:scale-105 transition-all ml-3"
-            asChild
+            onClick={() => navigate("/home")}
           >
-            <a href="/home">
-              <ArrowLeft className="mr-1" size={20} />
-              Back to Home
-            </a>
+            <ArrowLeft className="mr-1" size={20} />
+            Back to Home
           </Button>
         </div>
         <div className="w-full max-w-5xl flex-1 flex flex-col md:flex-row gap-6 items-start justify-center">
@@ -103,7 +104,7 @@ export default function WorkspaceRoom() {
           </div>
           <div className="flex flex-col gap-4 min-w-[320px] w-[340px] relative">
             <PixelTodo />
-            <PixelChatRoom team={currentTeam || undefined as any} />
+            <PixelChatRoom team={displayTeam || undefined as any} />
           </div>
         </div>
       </div>

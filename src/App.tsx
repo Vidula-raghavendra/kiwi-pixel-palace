@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,7 +17,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 
 const DashboardPage = () => {
   return (
-    <div className="min-h-[50vh] flex items-center justify-center">
+    <div className="min-h-screen w-full bg-[#e2fde4] flex items-center justify-center">
       <Dashboard />
     </div>
   );
@@ -57,18 +58,13 @@ const App = () => (
                 <DashboardPage />
               </ProtectedRoute>
             } />
-            <Route path="/workspace/my-room" element={
+            {/* Dynamic workspace routes for team IDs */}
+            <Route path="/workspace/:id" element={
               <ProtectedRoute>
                 <WorkspaceRoomPage />
               </ProtectedRoute>
             } />
-            {/* Accept numeric/alphanumeric workspace IDs only */}
-            <Route path="/workspace/:id" element={
-              <ProtectedRoute>
-                <WorkspacePage />
-              </ProtectedRoute>
-            } />
-            {/* Fallback for any other unknown or malformed workspace route */}
+            {/* Fallback for any other unknown workspace route */}
             <Route path="/workspace/*" element={<NotFoundOrInvalidWorkspace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
