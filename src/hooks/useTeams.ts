@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-// bcryptjs can be swapped with bcrypt if you want to run server-side only
 import bcrypt from 'bcryptjs';
 
 export interface Team {
@@ -117,7 +116,7 @@ export const useTeams = () => {
     }
   };
 
-  // Create team (with team_code + password_hash)
+  // Create team (with team_code + password_hash + invite_code)
   const createTeamZoomStyle = async (
     name: string,
     description: string,
@@ -127,24 +126,30 @@ export const useTeams = () => {
     try {
       setLoading(true);
 
-      // Generate unique team code (8 char)
+      // Generate unique codes (8 char)
       const teamCode = (
         Math.random().toString(36).substring(2, 10) + Date.now().toString()
       )
         .replace(/[^a-zA-Z0-9]/g, "")
         .slice(0, 8)
         .toUpperCase();
+      const inviteCode = (
+        Math.random().toString(36).substring(2, 10) + (Date.now() + 1).toString()
+      )
+        .replace(/[^a-zA-Z0-9]/g, "")
+        .slice(0, 8)
+        .toUpperCase();
 
-      // Hash password
       const hash = password ? await bcrypt.hash(password, 10) : null;
 
-      // Insert team
+      // Insert team (with team_code + invite_code!)
       const { data: teamInserted, error: teamError } = await supabase
         .from("teams")
         .insert({
           name,
           description,
           team_code: teamCode,
+          invite_code: inviteCode,
           password_hash: hash,
           created_by: user.id,
           creator_id: user.id,
@@ -152,7 +157,8 @@ export const useTeams = () => {
         .select()
         .single();
       if (teamError) throw teamError;
-      // Add creator as admin (our RLS/policies already allow)
+
+      // Add creator as admin
       const { error: memberErr } = await supabase
         .from("team_members")
         .insert({
@@ -166,7 +172,7 @@ export const useTeams = () => {
         description: `Team "${name}" created! Code: ${teamCode}`,
       });
       await fetchTeams();
-      return teamInserted; // Contains id/team_code for inviter to share
+      return teamInserted;
     } catch (error: any) {
       toast({
         title: "Error",
