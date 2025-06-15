@@ -51,66 +51,72 @@ export const useTeams = () => {
   const [loading, setLoading] = useState(false);
   const supabaseRef = useRef(supabase);
 
-  useEffect(() => {
-    if (!user) return;
-    // We store the channel outside so we never create multiple with the same name
-    let channel: any = null;
+  // Defensive: warn if used outside AuthProvider (user will be undefined)
+  if (typeof window !== "undefined" && user === undefined) {
+    // eslint-disable-next-line no-console
+    console.warn("[useTeams] Error: useTeams() is being used outside an <AuthProvider>. Please ensure your entire app is wrapped in <AuthProvider>.");
+    // Optionally throw or return a stub if you want
+    // throw new Error("useTeams must be used within AuthProvider");
+  }
 
-    // Defensive: First cleanup any previous channel with the same name (Supabase doesn't auto-destroy on fast mount/unmount/re-render)
-    // Explicitly remove it before creating a new one
+  useEffect(() => {
+    if (!user) {
+      // Only log if actually mounted in browser, prevents error spam on SSR/static pass
+      if (typeof window !== "undefined") {
+        console.warn('[useTeams] No user found. Aborting Supabase realtime channel subscription.');
+      }
+      return;
+    }
+    // BEGIN realtime channel setup
+    let channel: any = null;
     const channelName = "teams_members_presence_" + user.id;
 
-    // Remove any previous channel with this name
+    // Defensive cleanup
     if (supabaseRef.current && supabaseRef.current.getChannels) {
-      // getChannels() returns an array of all current channels
       const old = supabaseRef.current.getChannels().find(ch => ch.topic === `realtime:${channelName}`);
       if (old) {
         supabaseRef.current.removeChannel(old);
-        // Extra: For debug
         console.log("[Teams] Removed old realtime channel:", channelName);
       }
     }
 
-    // Create the new channel
-    if (supabaseRef.current) {
-      channel = supabaseRef.current
-        .channel(channelName)
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'team_members', filter: `user_id=eq.${user.id}` },
-          (payload) => {
-            console.log("[Teams] Received team_members event for user", payload);
-            fetchTeams();
+    channel = supabaseRef.current
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'team_members', filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          console.log("[Teams] Received team_members event for user", payload);
+          fetchTeams();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'team_members' },
+        (payload) => {
+          if (currentTeam) {
+            console.log("[Teams] Received team_members event for currentTeam", payload);
+            fetchTeamMembers(currentTeam.id);
           }
-        )
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'team_members' },
-          (payload) => {
-            if (currentTeam) {
-              console.log("[Teams] Received team_members event for currentTeam", payload);
-              fetchTeamMembers(currentTeam.id);
-            }
-          }
-        )
-        .subscribe((status, err) => {
-          if (status === "SUBSCRIBED") {
-            console.log("[Teams] Subscribed to realtime channel:", channelName);
-          } else if (err) {
-            console.warn("[Teams] Sub failed:", err);
-          }
-        });
-    }
+        }
+      )
+      .subscribe((status, err) => {
+        if (status === "SUBSCRIBED") {
+          console.log("[Teams] Subscribed to realtime channel:", channelName);
+        } else if (err) {
+          console.warn("[Teams] Sub failed:", err);
+        }
+      });
 
-    // Cleanup on dismount, user change, or reload
     return () => {
       if (channel && supabaseRef.current) {
         supabaseRef.current.removeChannel(channel);
         console.log("[Teams] Cleaned up channel:", channelName);
       }
     };
-    // *CRUCIAL*: Only trigger when user changes, NOT on currentTeam or anything else
-  }, [user]);
+    // Only rerun if user changes:
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]); // do NOT put currentTeam in dep array!
 
   // Make sure teams always reflect up-to-date memberships on login
   useEffect(() => {
