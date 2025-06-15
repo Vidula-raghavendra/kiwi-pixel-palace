@@ -32,7 +32,8 @@ function SidebarSection({ label, icon, children }: { label: string, icon: React.
   );
 }
 
-export default function WorkspaceSidebar() {
+// Add toast function
+const WorkspaceSidebar = () => {
   const { profile, signOut } = useAuth();
   const {
     teams,
@@ -43,11 +44,14 @@ export default function WorkspaceSidebar() {
     deleteTeam,
     loading,
   } = useTeams();
+  const { toast } = useToast();
 
   // For Invite section
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteGithub, setInviteGithub] = useState("");
   const [inviteLoading, setInviteLoading] = useState(false);
+
+  const teamId = currentTeam?.id;
 
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault();
@@ -157,7 +161,6 @@ export default function WorkspaceSidebar() {
     if (displayTeam) fetchTeamMembers(displayTeam.id);
   }, [displayTeam?.id]);
 
-  const teamId = currentTeam?.id;
   const {
     handleLeaveTeam,
     handleDeleteTeam,
@@ -306,3 +309,4 @@ export default function WorkspaceSidebar() {
     </aside>
   );
 }
+export default WorkspaceSidebar;
