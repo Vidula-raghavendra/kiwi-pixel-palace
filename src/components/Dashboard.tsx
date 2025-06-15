@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTeams } from "@/hooks/useTeams";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Copy, CopyCheck, LogOut } from "lucide-react";
+import { CopyCheck, Copy, LogOut, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const statCard =
@@ -76,13 +76,118 @@ function InviteModal({
   );
 }
 
+// Minimal CreateTeam Modal
+function CreateTeamModal({ open, onClose, onTeamCreated, loading }: {
+  open: boolean;
+  onClose: () => void;
+  onTeamCreated: (team: any) => void;
+  loading: boolean;
+}) {
+  const [name, setName] = useState("");
+  const [desc, setDesc] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  // Reset form on open/close
+  React.useEffect(() => {
+    if (!open) {
+      setName("");
+      setDesc("");
+      setErrorMsg("");
+    }
+  }, [open]);
+
+  const { createTeam } = useTeams();
+
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault();
+    setErrorMsg("");
+    try {
+      const team = await createTeam(name.trim(), desc.trim() || "");
+      onTeamCreated(team);
+    } catch (err: any) {
+      setErrorMsg(err?.message || "Could not create team.");
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={o => !o ? onClose() : undefined}>
+      <DialogContent>
+        <DialogTitle className="pixel-font text-[#233f24]">Create a New Team</DialogTitle>
+        <form onSubmit={handleCreate} className="flex flex-col gap-3 mt-2">
+          <Input
+            placeholder="Team name"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            required
+            disabled={loading}
+            autoFocus
+            className="pixel-font"
+          />
+          <Input
+            placeholder="Description (optional)"
+            value={desc}
+            onChange={e => setDesc(e.target.value)}
+            disabled={loading}
+            className="pixel-font"
+          />
+          {errorMsg && <div className="text-red-500 px-1 text-sm">{errorMsg}</div>}
+          <Button
+            disabled={loading || !name.trim()}
+            type="submit"
+            className="pixel-font mt-2 bg-[#badc5b] text-[#233f24] w-full"
+          >
+            {loading ? "Creating..." : "Create"}
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Minimal TeamCode modal for instant copy/share
+function TeamCodeModal({ open, onClose, code }: { open: boolean, onClose: () => void, code: string }) {
+  const [copied, setCopied] = useState(false);
+  function handleCopy() {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1300);
+  }
+  React.useEffect(() => { if (!open) setCopied(false); }, [open]);
+  return (
+    <Dialog open={open} onOpenChange={o => { if (!o) onClose(); }}>
+      <DialogContent>
+        <DialogTitle className="pixel-font text-[#233f24]">Team Join Code</DialogTitle>
+        <div className="text-sm text-[#233f24] mb-3">
+          Share this code with your teammates to let them join your team:
+        </div>
+        <div className="flex items-center gap-2 mb-3">
+          <Input readOnly value={code} className="pixel-font text-lg" />
+          <Button onClick={handleCopy} className="bg-[#badc5b] text-[#233f24] flex gap-1 rounded px-2 py-2">
+            {copied ? <CopyCheck size={16} /> : <Copy size={16} />}
+          </Button>
+        </div>
+        <Button onClick={onClose} className="w-full pixel-font bg-[#badc5b] text-[#233f24]">
+          Done
+        </Button>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Main Dashboard
 const Dashboard: React.FC = () => {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
-  
-  // CRITICAL: All hooks must be called at the top level - NEVER conditionally
-  const { createTeam, joinTeam, loading, teams, currentTeam } = useTeams();
-  
+
+  // HOOKS must always be at the top
+  const { createTeam, loading, teams, currentTeam } = useTeams();
+
+  // CreateTeam modal state
+  const [createOpen, setCreateOpen] = useState(false);
+  // TeamCode modal state (show after creation)
+  const [codeOpen, setCodeOpen] = useState(false);
+  const [createdCode, setCreatedCode] = useState("");
+
   // Only one InviteModal rendered (moved out the duplicate at bottom!)
   const [modalOpen, setModalOpen] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
@@ -122,21 +227,36 @@ const Dashboard: React.FC = () => {
     }
   }
 
+  // Called after successful team created
+  function handleCreated(team: any) {
+    setCreatedCode(team.invite_code || team.team_code || "");
+    setCreateOpen(false);
+    setCodeOpen(true);
+  }
+
   return (
     <div className="w-full h-full flex flex-col items-center py-10 gap-8 animate-fade-in">
-      <div className="flex items-center justify-between w-full max-w-[640px]">
+      <div className="flex items-center justify-between w-full max-w-[640px] relative">
         <div className="text-3xl pixel-font text-[#233f24] text-center">
           Welcome, {displayName}!
         </div>
-        <Button
-          onClick={signOut}
-          variant="outline"
-          size="sm"
-          className="pixel-font text-[#233f24] border-[#ad9271] flex items-center gap-2"
-        >
-          <LogOut size={16} />
-          Sign Out
-        </Button>
+        <div className="flex items-center gap-2 absolute right-0 top-1">
+          <Button
+            onClick={() => setCreateOpen(true)}
+            className="pixel-font bg-[#8bb47e] hover:bg-[#badc5b] flex items-center gap-1 text-[#233f24] px-3 text-sm rounded"
+          >
+            <Plus size={17} /> Create Team
+          </Button>
+          <Button
+            onClick={signOut}
+            variant="outline"
+            size="sm"
+            className="pixel-font text-[#233f24] border-[#ad9271] flex items-center gap-2"
+          >
+            <LogOut size={16} />
+            Sign Out
+          </Button>
+        </div>
       </div>
       
       {profile?.avatar_url && (
@@ -228,7 +348,7 @@ const Dashboard: React.FC = () => {
           inviteCode={inviteCode}
         />
       </div>
-      
+
       <div className="mt-6 pixel-font text-[#8bb47e] text-center">
         <div className="text-lg mb-1">Your recent activity</div>
         <div className="bg-[#fffdf3] border-2 border-[#ad9271] rounded-lg px-6 py-3 shadow-[0_2px_0_#ad9271] max-w-[440px] text-[#232b1b]">
@@ -255,6 +375,19 @@ const Dashboard: React.FC = () => {
           </Link>
         </Button>
       </div>
+      
+      {/* Modals */}
+      <CreateTeamModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onTeamCreated={handleCreated}
+        loading={loading}
+      />
+      <TeamCodeModal
+        open={codeOpen}
+        onClose={() => setCodeOpen(false)}
+        code={createdCode}
+      />
     </div>
   );
 };
