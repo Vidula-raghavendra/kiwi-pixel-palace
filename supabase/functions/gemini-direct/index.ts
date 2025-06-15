@@ -8,7 +8,6 @@ const corsHeaders = {
 };
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-// Use the exact endpoint provided
 const GEMINI_API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
 serve(async (req) => {
@@ -23,6 +22,9 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "No prompt provided" }), { status: 400, headers: corsHeaders });
     }
 
+    // Log the payload for tracing
+    console.log("Gemini request prompt:", prompt);
+
     const geminiResponse = await fetch(
       GEMINI_API_ENDPOINT,
       {
@@ -33,15 +35,19 @@ serve(async (req) => {
         }),
       }
     );
+
     const geminiData = await geminiResponse.json();
+
+    // Log the raw response for debugging
+    console.log("Gemini raw response:", JSON.stringify(geminiData));
 
     const result =
       geminiData.candidates?.[0]?.content?.parts?.[0]?.text ||
       geminiData.candidates?.[0]?.content?.text ||
       geminiData.candidates?.[0]?.output ||
-      geminiData;
+      null;
 
-    return new Response(JSON.stringify({ result }), {
+    return new Response(JSON.stringify({ result, raw: geminiData }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {

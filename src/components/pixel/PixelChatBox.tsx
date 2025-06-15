@@ -51,6 +51,16 @@ export default function PixelChatBox() {
           ...msgs,
           { sender: "ai", text: "Sorry, there was an error: " + String(data.error) },
         ]);
+      } else if (data?.raw) {
+        setMessages((msgs) => [
+          ...msgs,
+          {
+            sender: "ai",
+            text:
+              "No response from AI. Raw Gemini output:\n" +
+              JSON.stringify(data.raw, null, 2),
+          },
+        ]);
       } else {
         setMessages((msgs) => [
           ...msgs,
