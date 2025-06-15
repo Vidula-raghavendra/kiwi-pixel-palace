@@ -15,7 +15,7 @@ export default function LandingPage() {
       {/* Storyblok content: simple block with your API key and slug */}
       <div className="w-full max-w-xl mx-auto mt-4">
         <StoryblokBlock
-          apiKey="" // <-- Set your PUBLIC API KEY here for demo, or pass as prop
+          apiKey="3g8JZw33SLAbX0dAYNuNhgtt-293643-b2juxchnAieqaayEUA1b"
           storySlug="welcome"
         />
       </div>
