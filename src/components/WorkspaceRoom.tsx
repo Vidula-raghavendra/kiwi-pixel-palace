@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -15,6 +14,18 @@ export default function WorkspaceRoom() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { teams, currentTeam, setCurrentTeam, loading } = useTeams();
+
+  // Early return if user is not authenticated
+  if (!user) {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#e2fde4]">
+        <div className="pixel-font text-lg text-[#233f24]">Please sign in to access workspace</div>
+        <Button onClick={() => navigate('/auth')} className="mt-4 pixel-font">
+          Sign In
+        </Button>
+      </div>
+    );
+  }
 
   useEffect(() => {
     if (id && teams && teams.length > 0) {

@@ -33,43 +33,32 @@ function SidebarSection({ label, icon, children }: { label: string, icon: React.
 }
 
 export default function WorkspaceSidebar() {
-  // Defensive: handle context errors visually
-  let profile, signOut, authLoading, errorMsg = "";
+  // Safely handle missing AuthContext
+  let profile, signOut, authLoading;
   try {
     const auth = useAuth();
     profile = auth.profile;
     signOut = auth.signOut;
     authLoading = auth.loading;
   } catch (e) {
-    errorMsg = (e as Error)?.message || "Account context missing.";
-    console.error("WorkspaceSidebar: missing AuthContext!", e);
+    console.error("WorkspaceSidebar: AuthContext not available, redirecting...");
+    // If AuthContext is missing, this component shouldn't render
+    return null;
   }
 
+  // Safely handle missing TeamsContext
   let teams, currentTeam, setCurrentTeam, teamMembers, fetchTeamMembers, loading;
-  if (!errorMsg) {
-    try {
-      const teamHook = useTeams();
-      teams = teamHook.teams;
-      currentTeam = teamHook.currentTeam;
-      setCurrentTeam = teamHook.setCurrentTeam;
-      teamMembers = teamHook.teamMembers;
-      fetchTeamMembers = teamHook.fetchTeamMembers;
-      loading = teamHook.loading;
-    } catch (e) {
-      errorMsg = (e as Error)?.message || "Team context missing.";
-      console.error("WorkspaceSidebar: missing TeamsContext!", e);
-    }
-  }
-
-  if (errorMsg) {
-    return (
-      <aside className="bg-[#fffde8] border-r border-[#badc5b] min-w-[250px] max-w-[270px] flex flex-col justify-center items-center h-screen z-30 shadow-lg">
-        <span className="pixel-font text-red-500 text-base mt-10">
-          {errorMsg} <br />
-          <span className="text-xs text-[#ad9271]">(WorkspaceSidebar)</span>
-        </span>
-      </aside>
-    );
+  try {
+    const teamHook = useTeams();
+    teams = teamHook.teams;
+    currentTeam = teamHook.currentTeam;
+    setCurrentTeam = teamHook.setCurrentTeam;
+    teamMembers = teamHook.teamMembers;
+    fetchTeamMembers = teamHook.fetchTeamMembers;
+    loading = teamHook.loading;
+  } catch (e) {
+    console.error("WorkspaceSidebar: TeamsContext not available");
+    return null;
   }
 
   // Invite/Share/Members panel logic
