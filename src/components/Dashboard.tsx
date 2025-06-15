@@ -19,8 +19,10 @@ const modalDefaults = {
 
 const Dashboard: React.FC = () => {
   const { user, profile, signOut } = useAuth();
-  const { createTeam, joinTeam, loading, teams, currentTeam } = useTeams();
   const navigate = useNavigate();
+  
+  // Always call useTeams at the top level - never conditionally
+  const { createTeam, joinTeam, loading, teams, currentTeam } = useTeams();
   
   const [modal, setModal] = React.useState(modalDefaults);
   const [formData, setFormData] = React.useState({
@@ -33,6 +35,11 @@ const Dashboard: React.FC = () => {
     teamJoinPassword: ''
   });
   const [errorMsg, setErrorMsg] = React.useState("");
+
+  // Early return after all hooks are called
+  if (!user) {
+    return null;
+  }
 
   const displayName = profile?.full_name || profile?.github_username || user?.email || 'User';
 
@@ -63,7 +70,6 @@ const Dashboard: React.FC = () => {
       const newTeam = await createTeam(formData.teamName, formData.teamDesc, formData.teamPassword);
       console.log('Team created successfully:', newTeam);
       closeAll();
-      // Navigate to the new team's workspace immediately
       navigate(`/workspace/${newTeam.id}`);
     } catch (error: any) {
       console.error('Error creating team:', error);
@@ -79,7 +85,6 @@ const Dashboard: React.FC = () => {
       const joinedTeam = await joinTeam(formData.inviteCode, formData.teamJoinPassword);
       console.log('Team joined successfully:', joinedTeam);
       closeAll();
-      // Navigate to the joined team's workspace immediately
       navigate(`/workspace/${joinedTeam.id}`);
     } catch (error: any) {
       console.error('Error joining team:', error);
@@ -90,7 +95,6 @@ const Dashboard: React.FC = () => {
   function submitInvite(e: React.FormEvent) {
     e.preventDefault();
     closeAll();
-    // If user has teams, go to current team workspace
     if (currentTeam) {
       navigate(`/workspace/${currentTeam.id}`);
     }
@@ -148,7 +152,6 @@ const Dashboard: React.FC = () => {
       </div>
       
       <div className="flex flex-row justify-center gap-5 mt-4">
-        {/* Show enter workspace button if user has teams */}
         {teams && teams.length > 0 && currentTeam && (
           <Button 
             className="pixel-font bg-[#badc5b] border-[#233f24] border-2 rounded-lg text-[#233f24] text-lg px-5 py-2 shadow-[0_2px_0_#ad9271] hover:brightness-95 hover:scale-105 transition-all flex flex-row items-center gap-2"
