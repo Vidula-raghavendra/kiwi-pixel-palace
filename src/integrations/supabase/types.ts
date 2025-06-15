@@ -9,6 +9,55 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      chat_clones: {
+        Row: {
+          created_at: string
+          id: string
+          message_ids: string[]
+          source_user_id: string
+          target_user_id: string
+          team_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_ids: string[]
+          source_user_id: string
+          target_user_id: string
+          team_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_ids?: string[]
+          source_user_id?: string
+          target_user_id?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_clones_source_user_id_fkey"
+            columns: ["source_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_clones_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_clones_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -77,11 +126,63 @@ export type Database = {
           },
         ]
       }
+      team_invitations: {
+        Row: {
+          accepted_at: string | null
+          code: string | null
+          created_at: string
+          email: string | null
+          github_username: string | null
+          id: string
+          invited_by: string
+          status: string
+          team_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          code?: string | null
+          created_at?: string
+          email?: string | null
+          github_username?: string | null
+          id?: string
+          invited_by: string
+          status?: string
+          team_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          code?: string | null
+          created_at?: string
+          email?: string | null
+          github_username?: string | null
+          id?: string
+          invited_by?: string
+          status?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_invitations_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_invitations_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_members: {
         Row: {
           id: string
           joined_at: string
           role: string
+          status: string | null
           team_id: string
           user_id: string
         }
@@ -89,6 +190,7 @@ export type Database = {
           id?: string
           joined_at?: string
           role: string
+          status?: string | null
           team_id: string
           user_id: string
         }
@@ -96,6 +198,7 @@ export type Database = {
           id?: string
           joined_at?: string
           role?: string
+          status?: string | null
           team_id?: string
           user_id?: string
         }
@@ -138,6 +241,54 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      user_chats: {
+        Row: {
+          created_at: string
+          id: string
+          last_used_at: string | null
+          llm_provider: string | null
+          team_id: string
+          thread: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_used_at?: string | null
+          llm_provider?: string | null
+          team_id: string
+          thread: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_used_at?: string | null
+          llm_provider?: string | null
+          team_id?: string
+          thread?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_chats_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_chats_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

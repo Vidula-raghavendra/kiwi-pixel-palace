@@ -12,6 +12,7 @@ export type UserChat = {
   last_used_at?: string;
 };
 
+// Fetch the chat for a user in a team
 export async function fetchUserChats(team_id: string, user_id: string) {
   const { data, error } = await supabase
     .from("user_chats")
@@ -23,6 +24,7 @@ export async function fetchUserChats(team_id: string, user_id: string) {
   return data as UserChat;
 }
 
+// Create or update (upsert) user's chat thread for a team
 export async function upsertUserChat(chat: Partial<UserChat> & { user_id: string; team_id: string; }) {
   const { data, error } = await supabase
     .from("user_chats")
