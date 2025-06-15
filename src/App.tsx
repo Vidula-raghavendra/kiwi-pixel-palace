@@ -9,7 +9,7 @@ import NotFound from "./pages/NotFound";
 import LandingPage from "./pages/LandingPage";
 import Dashboard from "./components/Dashboard";
 import React from "react";
-import KiwiWorkspace from "./components/KiwiWorkspace";
+import WorkspacePage from "./pages/WorkspacePage";
 import WorkspaceRoom from "./components/WorkspaceRoom";
 import AuthPage from "./pages/AuthPage";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -22,9 +22,6 @@ const DashboardPage = () => {
     </div>
   );
 };
-
-const WorkspacePage = () => <KiwiWorkspace />;
-const WorkspaceRoomPage = () => <WorkspaceRoom />;
 
 function NotFoundOrInvalidWorkspace() {
   return (
@@ -39,7 +36,14 @@ function NotFoundOrInvalidWorkspace() {
   );
 }
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -58,10 +62,15 @@ const App = () => (
                 <DashboardPage />
               </ProtectedRoute>
             } />
+            <Route path="/workspace" element={
+              <ProtectedRoute>
+                <WorkspacePage />
+              </ProtectedRoute>
+            } />
             {/* Dynamic workspace routes for team IDs */}
             <Route path="/workspace/:id" element={
               <ProtectedRoute>
-                <WorkspaceRoomPage />
+                <WorkspaceRoom />
               </ProtectedRoute>
             } />
             {/* Fallback for any other unknown workspace route */}

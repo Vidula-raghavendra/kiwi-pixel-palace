@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { LogOut, Users, User, Copy, Plus, Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -34,9 +35,36 @@ function SidebarSection({ label, icon, children }: { label: string, icon: React.
 
 export default function WorkspaceSidebar() {
   // Safely handle missing AuthContext with error boundary
-  const { profile, signOut, loading: authLoading } = useAuth();
+  const authContext = useAuth();
+  
+  if (!authContext) {
+    console.error('WorkspaceSidebar: AuthContext not available, redirecting...');
+    return (
+      <aside className="bg-[#fffde8] border-r border-[#badc5b] min-w-[250px] max-w-[270px] flex flex-col justify-center items-center h-screen z-30 shadow-lg">
+        <span className="pixel-font text-red-500 text-sm mt-10">
+          AuthContext not available.<br />
+          Please refresh the page.
+        </span>
+      </aside>
+    );
+  }
+
+  const { profile, signOut, loading: authLoading } = authContext;
 
   // Safely handle missing TeamsContext
+  const teamsHook = useTeams();
+  
+  if (!teamsHook) {
+    return (
+      <aside className="bg-[#fffde8] border-r border-[#badc5b] min-w-[250px] max-w-[270px] flex flex-col justify-center items-center h-screen z-30 shadow-lg">
+        <span className="pixel-font text-red-500 text-sm mt-10">
+          Teams context not available.<br />
+          Please refresh the page.
+        </span>
+      </aside>
+    );
+  }
+
   const { 
     teams, 
     currentTeam, 
@@ -44,7 +72,7 @@ export default function WorkspaceSidebar() {
     teamMembers, 
     fetchTeamMembers, 
     loading: teamsLoading 
-  } = useTeams();
+  } = teamsHook;
 
   // Invite/Share/Members panel logic
   const teamId = currentTeam?.id;
@@ -164,7 +192,7 @@ export default function WorkspaceSidebar() {
   // In case teams and currentTeam are both not loaded, show a loader early to prevent blank crash
   if (!displayTeam && teamsLoading) {
     return (
-      <aside className="bg-[#fffde8] border-r border-[#badc5b] min-w-[250px] max-w-[270px] flex flex-col justify-between h-screen z-30 shadow-lg">
+      <aside className="bg-[#fffde8] border-r border-[#badc5b] min-w-[250px] max-w-[270px] flex flex-col justify-center h-screen z-30 shadow-lg">
         <div className="flex flex-col items-center justify-center h-full">
           <span className="text-[#badc5b] pixel-font text-lg">Loading teams...</span>
         </div>
