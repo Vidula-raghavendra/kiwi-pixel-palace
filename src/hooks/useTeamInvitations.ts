@@ -47,14 +47,15 @@ export function useTeamInvitations(teamId?: string) {
     invited_by,
   }: { team_id: string, email?: string, github_username?: string, invited_by: string }) => {
     setLoading(true);
+    const insertObj = {
+      team_id,
+      email: email || null,
+      github_username: github_username || null,
+      invited_by,
+    };
     const { data, error } = await supabase
       .from("team_invitations")
-      .insert([{
-        team_id,
-        email: email || null,
-        github_username: github_username || null,
-        invited_by,
-      }])
+      .insert([insertObj])
       .select()
       .single();
     setLoading(false);
@@ -90,4 +91,3 @@ export function useTeamInvitations(teamId?: string) {
     acceptInvitation,
   };
 }
-

@@ -29,13 +29,14 @@ export async function fetchUserChats(team_id: string, user_id: string) {
 export async function upsertUserChat(chat: {
   user_id: string;
   team_id: string;
-  thread: Json;
+  thread: Json; // Required property!
   llm_provider?: string;
   last_used_at?: string;
   updated_at?: string;
   created_at?: string;
   id?: string;
 }) {
+  // Cast as required by TS: must be an array, with thread provided!
   const { data, error } = await supabase
     .from("user_chats")
     .upsert([chat], { onConflict: "user_id,team_id" })
