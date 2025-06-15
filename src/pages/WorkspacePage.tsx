@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -118,6 +117,7 @@ export default function WorkspacePage() {
                   openJoin={() => handleCard("invite")}
                   openInvite={() => handleCard("invite")}
                   loading={loading}
+                  // If DashboardCards expects callbacks with only one argument, make sure to only provide one!
                 />
               </div>
             </div>
@@ -128,7 +128,7 @@ export default function WorkspacePage() {
             closeAll={closeAll}
             loading={loading}
             formData={formData}
-            setFormData={setFormData}
+            setFormData={(value) => setFormData({ ...formData, ...value })} // Fix: use spread for partial updates
             submitCreateTeam={submitCreateTeam}
             submitJoinTeam={submitJoinTeam}
             errorMsg={errorMsg}
@@ -164,7 +164,7 @@ export default function WorkspacePage() {
           closeAll={closeAll}
           loading={loading}
           formData={formData}
-          setFormData={setFormData}
+          setFormData={(value) => setFormData({ ...formData, ...value })} // Fix: ensure single argument
           submitCreateTeam={submitCreateTeam}
           submitJoinTeam={submitJoinTeam}
           errorMsg={errorMsg}
