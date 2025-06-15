@@ -1,2 +1,0 @@
-
-ALTER TABLE public.team_members ENABLE ROW LEVEL SECURITY;
