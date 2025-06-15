@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface ProtectedRouteProps {
@@ -9,8 +9,15 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
-  // If auth is still loading, render a loader (not blank)
+  console.log('ProtectedRoute check:', { 
+    user: !!user, 
+    loading, 
+    pathname: location.pathname 
+  });
+
+  // If auth is still loading, render a loader
   if (loading) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-[#e2fde4]">
@@ -19,11 +26,13 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  // If user still not set/ready or is unauthenticated, redirect
+  // If user is not authenticated, redirect to auth page
   if (!user) {
+    console.log('ProtectedRoute: No user, redirecting to /auth');
     return <Navigate to="/auth" replace />;
   }
 
-  // Render actual content if authenticated
+  // User is authenticated, render the protected content
+  console.log('ProtectedRoute: User authenticated, rendering content');
   return <>{children}</>;
 }

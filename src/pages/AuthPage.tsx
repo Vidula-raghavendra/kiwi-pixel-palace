@@ -13,10 +13,12 @@ export default function AuthPage() {
   // Redirect authenticated users to home
   useEffect(() => {
     if (user && !loading) {
-      console.log('User is authenticated, redirecting to home');
+      console.log('AuthPage: User is authenticated, redirecting to home');
       navigate('/home', { replace: true });
     }
   }, [user, loading, navigate]);
+
+  console.log('AuthPage render:', { user: !!user, loading });
 
   if (loading) {
     return (
@@ -27,7 +29,7 @@ export default function AuthPage() {
   }
 
   if (user) {
-    console.log('User exists, should redirect');
+    console.log('AuthPage: User exists, should redirect');
     return null; // Let the useEffect handle the redirect
   }
 
