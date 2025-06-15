@@ -90,14 +90,25 @@ export default function WorkspaceSidebar() {
     loading: teamPanelLoading,
   } = useTeamSidebarPanel({ teamId: currentTeam?.id || "" });
 
-  // Instead of redirecting as soon as we can't find the team,
-  // wait for teams loading to finish before attempting to redirect.
+  // Improved redirect logic: Only redirect **after** allTeams finished loading and user tried to view a workspace
   React.useEffect(() => {
-    if (id && allTeams && !loading) {
+    // Add defensive logging so we see state during navigation
+    console.log("[WorkspaceSidebar] Effect: id, allTeams, loading", {
+      id,
+      allTeams,
+      loading,
+      currentTeam,
+    });
+
+    // Don't run until loading complete:
+    if (loading) return;
+
+    if (id) {
       const team = allTeams.find((team) => team.id === id);
       if (team) {
         setCurrentTeam(team);
-      } else {
+      } else if (allTeams.length > 0) {
+        // Only redirect if we DO have teams (i.e. the user is in teams but not in this specific one)
         toast({
           title: "Team not found",
           description: "Redirecting to workspace...",
@@ -105,6 +116,9 @@ export default function WorkspaceSidebar() {
         setTimeout(() => {
           navigate("/workspace");
         }, 1500);
+      } else {
+        // If user has NO teams, don't redirect yet; WorkspacePage should show onboarding instead!
+        console.warn("[WorkspaceSidebar] No teams found for user, not redirecting from workspace room!");
       }
     }
     // eslint-disable-next-line
