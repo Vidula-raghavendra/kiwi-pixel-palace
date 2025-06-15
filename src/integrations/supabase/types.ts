@@ -216,28 +216,37 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string
+          creator_id: string | null
           description: string | null
           id: string
           invite_code: string
           name: string
+          password_hash: string | null
+          team_code: string
           updated_at: string
         }
         Insert: {
           created_at?: string
           created_by: string
+          creator_id?: string | null
           description?: string | null
           id?: string
           invite_code: string
           name: string
+          password_hash?: string | null
+          team_code: string
           updated_at?: string
         }
         Update: {
           created_at?: string
           created_by?: string
+          creator_id?: string | null
           description?: string | null
           id?: string
           invite_code?: string
           name?: string
+          password_hash?: string | null
+          team_code?: string
           updated_at?: string
         }
         Relationships: []

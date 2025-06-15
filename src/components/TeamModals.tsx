@@ -51,6 +51,16 @@ export function TeamModals({
               className="pixel-outline bg-[#f9fbe3] text-[#7b6449]"
               disabled={loading}
             />
+            <Input
+              name="password"
+              type="password"
+              placeholder="Team Password (optional)"
+              value={formData.teamPassword}
+              autoComplete="new-password"
+              onChange={(e) => setFormData((prev: any) => ({ ...prev, teamPassword: e.target.value }))}
+              className="pixel-outline bg-[#f9fbe3] text-[#233f24]"
+              disabled={loading}
+            />
             {errorMsg && <div className="text-red-500 text-xs">{errorMsg}</div>}
             <Button
               type="submit"
@@ -73,11 +83,21 @@ export function TeamModals({
             <Input
               name="invite"
               required
-              placeholder="Enter Invite Code"
+              placeholder="Enter Team Code"
               value={formData.inviteCode}
               onChange={(e) => setFormData((prev: any) => ({ ...prev, inviteCode: e.target.value }))}
               className="pixel-outline bg-[#f9fbe3] text-[#233f24]"
               autoFocus
+              disabled={loading}
+            />
+            <Input
+              name="teamJoinPassword"
+              type="password"
+              placeholder="Team Password"
+              value={formData.teamJoinPassword}
+              autoComplete="current-password"
+              onChange={(e) => setFormData((prev: any) => ({ ...prev, teamJoinPassword: e.target.value }))}
+              className="pixel-outline bg-[#f9fbe3] text-[#233f24]"
               disabled={loading}
             />
             {errorMsg && <div className="text-red-500 text-xs">{errorMsg}</div>}

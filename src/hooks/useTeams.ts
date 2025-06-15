@@ -1,15 +1,19 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+// bcryptjs can be swapped with bcrypt if you want to run server-side only
+import bcrypt from 'bcryptjs';
 
 export interface Team {
   id: string;
   name: string;
   description: string | null;
   invite_code: string;
+  team_code: string;
+  password_hash: string | null;
   created_by: string;
+  creator_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -47,99 +51,127 @@ export const useTeams = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Fetch user's teams
+  // Only fetch teams user is a member of (via team_members)
   const fetchTeams = async () => {
     if (!user) return;
-    
     try {
       setLoading(true);
+      // Join team_members → teams for correct filter
       const { data, error } = await supabase
-        .from('teams')
-        .select('*')
-        .order('created_at', { ascending: false });
-        
+        .from("team_members")
+        .select("team_id, teams (*)")
+        .eq("user_id", user.id)
+        .order("joined_at", { ascending: false });
       if (error) throw error;
-      setTeams(data || []);
+      const fetchedTeams: Team[] =
+        data?.map((row: any) => row.teams).filter(Boolean) || [];
+      setTeams(fetchedTeams);
     } catch (error: any) {
-      console.error('Error fetching teams:', error);
+      console.error("Error fetching teams (membership-based):", error);
       toast({
         title: "Error",
         description: "Failed to load teams",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch team members with a separate query for profiles
+  // Only load team members for current team
   const fetchTeamMembers = async (teamId: string) => {
     try {
-      // First get team members
       const { data: membersData, error: membersError } = await supabase
-        .from('team_members')
-        .select('*')
-        .eq('team_id', teamId);
-        
+        .from("team_members")
+        .select("*")
+        .eq("team_id", teamId);
       if (membersError) throw membersError;
-      
+
       if (!membersData || membersData.length === 0) {
         setTeamMembers([]);
         return;
       }
 
-      // Then get profiles for those members
-      const userIds = membersData.map(member => member.user_id);
+      const userIds = membersData.map((member) => member.user_id);
       const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, username, full_name, avatar_url, github_username')
-        .in('id', userIds);
-        
+        .from("profiles")
+        .select("id, username, full_name, avatar_url, github_username")
+        .in("id", userIds);
+
       if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
+        console.error("Error fetching profiles:", profilesError);
       }
-      
-      // Combine the data
-      const transformedData: TeamMember[] = membersData.map(member => ({
+      // Merge member + profile
+      const transformedData: TeamMember[] = membersData.map((member) => ({
         id: member.id,
         team_id: member.team_id,
         user_id: member.user_id,
-        role: member.role as 'admin' | 'editor' | 'viewer',
+        role: member.role as "admin" | "editor" | "viewer",
         joined_at: member.joined_at,
-        profiles: profilesData?.find(profile => profile.id === member.user_id) || null
+        profiles: profilesData?.find((profile) => profile.id === member.user_id) || null,
       }));
-      
+
       setTeamMembers(transformedData);
     } catch (error: any) {
-      console.error('Error fetching team members:', error);
+      console.error("Error fetching team members:", error);
     }
   };
 
-  // Create a new team
-  const createTeam = async (name: string, description?: string) => {
-    if (!user) throw new Error('User not authenticated');
-    
+  // Create team (with team_code + password_hash)
+  const createTeamZoomStyle = async (
+    name: string,
+    description: string,
+    password?: string
+  ) => {
+    if (!user) throw new Error("User not authenticated");
     try {
       setLoading(true);
-      const { data, error } = await supabase.rpc('create_team_with_invite', {
-        team_name: name,
-        team_description: description
-      });
-      
-      if (error) throw error;
-      
+
+      // Generate unique team code (8 char)
+      const teamCode = (
+        Math.random().toString(36).substring(2, 10) + Date.now().toString()
+      )
+        .replace(/[^a-zA-Z0-9]/g, "")
+        .slice(0, 8)
+        .toUpperCase();
+
+      // Hash password
+      const hash = password ? await bcrypt.hash(password, 10) : null;
+
+      // Insert team
+      const { data: teamInserted, error: teamError } = await supabase
+        .from("teams")
+        .insert({
+          name,
+          description,
+          team_code: teamCode,
+          password_hash: hash,
+          created_by: user.id,
+          creator_id: user.id,
+        })
+        .select()
+        .single();
+      if (teamError) throw teamError;
+      // Add creator as admin (our RLS/policies already allow)
+      const { error: memberErr } = await supabase
+        .from("team_members")
+        .insert({
+          team_id: teamInserted.id,
+          user_id: user.id,
+          role: "admin",
+        });
+      if (memberErr) throw memberErr;
       toast({
         title: "Team Created",
-        description: `Team "${name}" created successfully!`,
+        description: `Team "${name}" created! Code: ${teamCode}`,
       });
-      
       await fetchTeams();
-      return data[0];
+      return teamInserted; // Contains id/team_code for inviter to share
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message || "Failed to create team",
-        variant: "destructive"
+        variant: "destructive",
       });
       throw error;
     } finally {
@@ -147,31 +179,53 @@ export const useTeams = () => {
     }
   };
 
-  // Join a team by invite code
-  const joinTeam = async (inviteCode: string) => {
-    if (!user) throw new Error('User not authenticated');
-    
+  // Join team by code + password (hashed verify)
+  const joinTeamZoomStyle = async (teamCode: string, password: string) => {
+    if (!user) throw new Error("User not authenticated");
     try {
       setLoading(true);
-      const { data, error } = await supabase.rpc('join_team_by_invite', {
-        code: inviteCode,
-        member_role: 'viewer'
-      });
-      
-      if (error) throw error;
-      
+      // 1. find team by code
+      const { data: team, error: teamError } = await supabase
+        .from("teams")
+        .select("*")
+        .eq("team_code", teamCode)
+        .maybeSingle();
+      if (teamError || !team) throw new Error("Invalid team code");
+
+      // 2. check password
+      if (team.password_hash) {
+        const ok = await bcrypt.compare(password, team.password_hash);
+        if (!ok) throw new Error("Incorrect password");
+      }
+
+      // 3. insert member (RLS will allow only if not already a member)
+      const { error: memberErr } = await supabase
+        .from("team_members")
+        .insert({
+          team_id: team.id,
+          user_id: user.id,
+          role: "viewer",
+        });
+      if (memberErr) {
+        if (
+          memberErr.message &&
+          memberErr.message.includes("duplicate key value")
+        ) {
+          throw new Error("Already a team member");
+        }
+        throw memberErr;
+      }
       toast({
         title: "Joined Team",
-        description: "Successfully joined the team!",
+        description: `You've joined "${team.name}"!`,
       });
-      
       await fetchTeams();
-      return data;
+      return team;
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message || "Failed to join team",
-        variant: "destructive"
+        variant: "destructive",
       });
       throw error;
     } finally {
@@ -179,7 +233,6 @@ export const useTeams = () => {
     }
   };
 
-  // Create a project
   const createProject = async (name: string, description: string, teamId: string) => {
     if (!user) throw new Error('User not authenticated');
     
@@ -235,9 +288,9 @@ export const useTeams = () => {
     teamMembers,
     projects,
     loading,
-    createTeam,
-    joinTeam,
-    createProject,
+    createTeam: createTeamZoomStyle,
+    joinTeam: joinTeamZoomStyle,
+    createProject: createProject,
     fetchTeams,
     fetchTeamMembers
   };

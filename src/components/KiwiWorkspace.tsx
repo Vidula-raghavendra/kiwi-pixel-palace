@@ -28,7 +28,9 @@ export default function KiwiWorkspace() {
     projectDesc: '',
     teamName: '',
     teamDesc: '',
-    inviteCode: ''
+    teamPassword: '',
+    inviteCode: '',
+    teamJoinPassword: ''
   });
   const [errorMsg, setErrorMsg] = React.useState("");
   const navigate = useNavigate();
@@ -48,7 +50,9 @@ export default function KiwiWorkspace() {
       projectDesc: '',
       teamName: '',
       teamDesc: '',
-      inviteCode: ''
+      teamPassword: '',
+      inviteCode: '',
+      teamJoinPassword: ''
     });
     setErrorMsg("");
   }
@@ -57,7 +61,7 @@ export default function KiwiWorkspace() {
     e.preventDefault();
     setErrorMsg("");
     try {
-      await createTeam(formData.teamName, formData.teamDesc);
+      await createTeam(formData.teamName, formData.teamDesc, formData.teamPassword);
       closeAll();
       setTimeout(() => {
         navigate("/workspace/my-room");
@@ -71,7 +75,7 @@ export default function KiwiWorkspace() {
     e.preventDefault();
     setErrorMsg("");
     try {
-      await joinTeam(formData.inviteCode);
+      await joinTeam(formData.inviteCode, formData.teamJoinPassword);
       closeAll();
       setTimeout(() => {
         navigate("/workspace/my-room");
