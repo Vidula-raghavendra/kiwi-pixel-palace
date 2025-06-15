@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -49,68 +50,77 @@ export const useTeams = () => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
-  const supabaseRef = useRef(supabase);
+  const mounted = useRef(true);
+  const channelRef = useRef<any>(null);
+  const subscriptionInitialized = useRef(false);
 
-  // --- Realtime Team Fetchers/Listeners ---
+  // Ensure hook is only used in valid context
   useEffect(() => {
-    if (!user) return;
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
-    const channel = supabaseRef.current
-      .channel("teams_members_presence")
-      // TEAM MEMBERSHIP: refetch user's teams if any change for current user
+  // Set up realtime subscription - only once per user
+  useEffect(() => {
+    if (!user?.id || !mounted.current || subscriptionInitialized.current) return;
+
+    const channelName = `teams_presence_${user.id}`;
+    
+    channelRef.current = supabase
+      .channel(channelName)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'team_members', filter: `user_id=eq.${user.id}` },
-        (payload) => {
-          fetchTeams();
+        () => {
+          if (mounted.current) {
+            fetchTeams();
+          }
         }
       )
-      // TEAM MEMBERS: refetch members if any row changes for current team
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'team_members' },
-        (payload) => {
-          if (currentTeam) fetchTeamMembers(currentTeam.id);
-        }
-      )
-      // TEAM DELETED: refetch if current team is deleted
-      .on(
-        'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'teams' },
-        (payload) => {
-          if (currentTeam && payload.old.id === currentTeam.id) {
-            setCurrentTeam(null);
-            setTeams(prevTeams => prevTeams.filter(team => team.id !== currentTeam.id));
-            toast({
-              title: "Team deleted",
-              description: "Your team was deleted.",
-              variant: "destructive"
-            });
+        () => {
+          if (mounted.current && currentTeam) {
+            fetchTeamMembers(currentTeam.id);
           }
-          fetchTeams();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          console.log("[Teams] Subscribed to realtime");
+          subscriptionInitialized.current = true;
+        }
+      });
 
     return () => {
-      supabaseRef.current.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+        subscriptionInitialized.current = false;
+      }
     };
-  }, [user, currentTeam?.id]);
+  }, [user?.id]); // Only depend on user.id
 
-  // Always fetch teams after login or team change
+  // Fetch teams when user changes
   useEffect(() => {
-    if (user) fetchTeams();
-    // eslint-disable-next-line
-  }, [user]);
+    if (user && mounted.current) {
+      fetchTeams();
+    }
+  }, [user?.id]);
 
+  // Fetch team members when currentTeam changes
   useEffect(() => {
-    if (currentTeam) fetchTeamMembers(currentTeam.id);
-    else setTeamMembers([]); // Avoid displaying stale data
-  }, [currentTeam]);
+    if (currentTeam && mounted.current) {
+      fetchTeamMembers(currentTeam.id);
+    }
+  }, [currentTeam?.id]);
 
-  // --- Defensive fetchTeams ---
   const fetchTeams = async () => {
-    if (!user) return;
+    if (!user || !mounted.current) return;
+    
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -118,15 +128,14 @@ export const useTeams = () => {
         .select("team_id, teams (*)")
         .eq("user_id", user.id)
         .order("joined_at", { ascending: false });
-
-      if (error) {
-        console.error("Error fetching teams (membership-based):", error);
-        throw error;
-      }
+        
+      if (error) throw error;
+      
+      if (!mounted.current) return;
+      
       const fetchedTeams: Team[] = data?.map((row: any) => row.teams).filter(Boolean) || [];
       setTeams(fetchedTeams);
-
-      // Sync currentTeam: pick the latest unless currentTeam still exists
+      
       if (fetchedTeams.length > 0) {
         if (!currentTeam || !fetchedTeams.some(t => t.id === currentTeam.id)) {
           setCurrentTeam(fetchedTeams[0]);
@@ -135,37 +144,39 @@ export const useTeams = () => {
         setCurrentTeam(null);
       }
     } catch (error: any) {
-      setTeams([]);
-      setCurrentTeam(null);
-      toast({
-        title: "Error",
-        description: "Failed to load teams. Try logging in again.",
-        variant: "destructive"
-      });
-      console.error("Error fetching teams (membership-based):", error);
+      if (mounted.current) {
+        console.error("Error fetching teams:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load teams",
+          variant: "destructive",
+        });
+        setTeams([]);
+        setCurrentTeam(null);
+      }
     } finally {
-      setLoading(false);
+      if (mounted.current) {
+        setLoading(false);
+      }
     }
   };
 
-  // --- Defensive fetchTeamMembers ---
   const fetchTeamMembers = async (teamId: string) => {
-    if (!teamId) {
-      setTeamMembers([]);
-      return;
-    }
+    if (!mounted.current) return;
+    
     try {
       const { data: membersData, error: membersError } = await supabase
         .from("team_members")
         .select("*")
         .eq("team_id", teamId);
-
+        
       if (membersError) throw membersError;
 
-      if (!membersData || membersData.length === 0) {
-        setTeamMembers([]);
+      if (!mounted.current || !membersData || membersData.length === 0) {
+        if (mounted.current) setTeamMembers([]);
         return;
       }
+
       const userIds = membersData.map((member) => member.user_id);
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
@@ -175,7 +186,9 @@ export const useTeams = () => {
       if (profilesError) {
         console.error("Error fetching profiles:", profilesError);
       }
-      // Merge member + profile
+
+      if (!mounted.current) return;
+
       const transformedData: TeamMember[] = membersData.map((member) => ({
         id: member.id,
         team_id: member.team_id,
@@ -187,53 +200,25 @@ export const useTeams = () => {
 
       setTeamMembers(transformedData);
     } catch (error: any) {
-      console.error("Error fetching team members:", error);
-      setTeamMembers([]);
+      if (mounted.current) {
+        console.error("Error fetching team members:", error);
+      }
     }
   };
 
-  // --- Delete team (admin/creator only) ---
-  const deleteTeam = async (teamId: string) => {
-    if (!user) throw new Error("Not authenticated");
-    if (!teamId) throw new Error("No team selected");
-    try {
-      setLoading(true);
-      const { error } = await supabase.from("teams").delete().eq("id", teamId);
-      if (error) throw error;
-      toast({
-        title: "Team Deleted",
-        description: "Team deleted successfully.",
-      });
-      fetchTeams();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to delete team",
-        variant: "destructive"
-      });
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Create team (with team_code + password_hash + invite_code)
-  const createTeamZoomStyle = async (
-    name: string,
-    description: string,
-    password?: string
-  ) => {
+  const createTeam = async (name: string, description: string, password?: string) => {
     if (!user) throw new Error("User not authenticated");
+    
     try {
       setLoading(true);
 
-      // Generate unique codes (8 char)
       const teamCode = (
         Math.random().toString(36).substring(2, 10) + Date.now().toString()
       )
         .replace(/[^a-zA-Z0-9]/g, "")
         .slice(0, 8)
         .toUpperCase();
+        
       const inviteCode = (
         Math.random().toString(36).substring(2, 10) + (Date.now() + 1).toString()
       )
@@ -243,7 +228,6 @@ export const useTeams = () => {
 
       const hash = password ? await bcrypt.hash(password, 10) : null;
 
-      // Insert team (with team_code + invite_code!)
       const { data: teamInserted, error: teamError } = await supabase
         .from("teams")
         .insert({
@@ -257,9 +241,9 @@ export const useTeams = () => {
         })
         .select()
         .single();
+        
       if (teamError) throw teamError;
 
-      // Add creator as admin
       const { error: memberErr } = await supabase
         .from("team_members")
         .insert({
@@ -267,45 +251,53 @@ export const useTeams = () => {
           user_id: user.id,
           role: "admin",
         });
+        
       if (memberErr) throw memberErr;
-      toast({
-        title: "Team Created",
-        description: `Team "${name}" created! Code: ${teamCode}`,
-      });
-      await fetchTeams();
+      
+      if (mounted.current) {
+        toast({
+          title: "Team Created",
+          description: `Team "${name}" created! Code: ${teamCode}`,
+        });
+        fetchTeams();
+      }
+      
       return teamInserted;
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create team",
-        variant: "destructive",
-      });
+      if (mounted.current) {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to create team",
+          variant: "destructive",
+        });
+      }
       throw error;
     } finally {
-      setLoading(false);
+      if (mounted.current) {
+        setLoading(false);
+      }
     }
   };
 
-  // Join team by code + password (hashed verify)
-  const joinTeamZoomStyle = async (teamCode: string, password: string) => {
+  const joinTeam = async (teamCode: string, password: string) => {
     if (!user) throw new Error("User not authenticated");
+    
     try {
       setLoading(true);
-      // 1. find team by code (allow both invite_code or team_code for flexibility)
+      
       let { data: team, error: teamError } = await supabase
         .from("teams")
         .select("*")
         .or(`team_code.eq.${teamCode},invite_code.eq.${teamCode}`)
         .maybeSingle();
+        
       if (teamError || !team) throw new Error("Invalid team code");
 
-      // 2. check password
       if (team.password_hash) {
         const ok = await bcrypt.compare(password, team.password_hash);
         if (!ok) throw new Error("Incorrect password");
       }
 
-      // 3. insert member (viewer)
       const { error: memberErr } = await supabase
         .from("team_members")
         .insert({
@@ -313,28 +305,35 @@ export const useTeams = () => {
           user_id: user.id,
           role: "viewer",
         });
+        
       if (memberErr && memberErr.message.includes("duplicate key value")) {
         throw new Error("Already a team member");
       }
       if (memberErr) throw memberErr;
 
-      toast({
-        title: "Joined Team",
-        description: `You've joined "${team.name}"!`,
-      });
-      // Ensure teams get refetched immediately
-      await fetchTeams();
-      setCurrentTeam(team);
+      if (mounted.current) {
+        toast({
+          title: "Joined Team",
+          description: `You've joined "${team.name}"!`,
+        });
+        fetchTeams();
+        setCurrentTeam(team);
+      }
+      
       return team;
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to join team",
-        variant: "destructive",
-      });
+      if (mounted.current) {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to join team",
+          variant: "destructive",
+        });
+      }
       throw error;
     } finally {
-      setLoading(false);
+      if (mounted.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -356,21 +355,27 @@ export const useTeams = () => {
         
       if (error) throw error;
       
-      toast({
-        title: "Project Created",
-        description: `Project "${name}" created successfully!`,
-      });
+      if (mounted.current) {
+        toast({
+          title: "Project Created",
+          description: `Project "${name}" created successfully!`,
+        });
+      }
       
       return data;
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create project",
-        variant: "destructive"
-      });
+      if (mounted.current) {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to create project",
+          variant: "destructive"
+        });
+      }
       throw error;
     } finally {
-      setLoading(false);
+      if (mounted.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -381,11 +386,10 @@ export const useTeams = () => {
     teamMembers,
     projects,
     loading,
-    createTeam: createTeamZoomStyle,
-    joinTeam: joinTeamZoomStyle,
-    createProject: createProject,
+    createTeam,
+    joinTeam,
+    createProject,
     fetchTeams,
-    fetchTeamMembers,
-    deleteTeam,
+    fetchTeamMembers
   };
 };
