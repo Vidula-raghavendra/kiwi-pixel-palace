@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTeams } from "@/hooks/useTeams";
@@ -41,6 +42,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useProjects } from "@/hooks/useProjects";
+import InviteModal from "@/components/ui/InviteModal";
+import ShareCodeModal from "@/components/ui/ShareCodeModal";
 
 export default function WorkspaceSidebar() {
   const auth = useAuth();
@@ -78,6 +81,10 @@ export default function WorkspaceSidebar() {
   const { createProject } = useProjects();
   const [projectName, setProjectName] = React.useState("");
   const [projectDesc, setProjectDesc] = React.useState("");
+
+  // ---- NEW MODAL LOGIC ----
+  const [showInvite, setShowInvite] = React.useState(false);
+  const [showCode, setShowCode] = React.useState(false);
 
   // Team panel actions
   const {
@@ -140,66 +147,52 @@ export default function WorkspaceSidebar() {
     }
   }
 
+  // --- SIDEBAR NAV/ACTIONS
+  const sidebarActions = [
+    {
+      key: "members",
+      label: "Team Members",
+      icon: <Users className="w-5 h-5" />,
+      onClick: null,
+      disabled: true,
+      highlight: false,
+    },
+    {
+      key: "invite",
+      label: "Invite Member",
+      icon: <UserPlus className="w-5 h-5" />,
+      onClick: () => setShowInvite(true),
+      disabled: !currentTeam,
+      highlight: false,
+    },
+    {
+      key: "code",
+      label: "Share Code",
+      icon: <Share2 className="w-5 h-5" />,
+      onClick: () => setShowCode(true),
+      disabled: !currentTeam,
+      highlight: false,
+    },
+  ];
+
   return (
     <SidebarProvider>
       <div className="w-64 flex flex-col h-screen bg-[#f7ffe1] border-r border-[#badc5b]">
-        <div className="flex items-center justify-between p-4">
-          <div className="pixel-font text-lg text-[#233f24]">
-            {currentTeam?.name || "Workspace"}
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open options</span>
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Team Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => openModal("invite")}>
-                <UserPlus className="mr-2 h-4 w-4" />
-                Invite Members
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => openModal("share")}>
-                <Share2 className="mr-2 h-4 w-4" />
-                Share Team
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => openModal("members")}>
-                <Users className="mr-2 h-4 w-4" />
-                View Members
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <DropdownMenuItem className="text-red-500">
-                    {canDeleteTeam ? "Delete Team" : "Leave Team"}
-                  </DropdownMenuItem>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>
-                      {canDeleteTeam ? "Delete Team?" : "Leave Team?"}
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {canDeleteTeam
-                        ? "This will permanently delete the team and all associated data."
-                        : "Are you sure you want to leave this team?"}
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={canDeleteTeam ? handleDeleteTeam : handleLeaveTeam}
-                    >
-                      {teamPanelLoading ? "Loading..." : canDeleteTeam ? "Delete" : "Leave"}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        {/* --- SIDEBAR ACTIONS (NEW) --- */}
+        <div className="flex flex-col gap-2 p-4">
+          {sidebarActions.map((act) => (
+            <button
+              key={act.key}
+              onClick={act.onClick || undefined}
+              className={`flex items-center gap-2 px-3 py-2 rounded pixel-font text-[#233f24] transition-colors ${act.disabled ? 'opacity-50 pointer-events-none bg-[#f7ffe1]' : 'hover:bg-[#e8f6da] bg-[#fffde8]'} ${act.highlight ? 'bg-[#badc5b]' : ''}`}
+              disabled={act.disabled}
+              tabIndex={0}
+            >
+              {act.icon}
+              <span>{act.label}</span>
+            </button>
+          ))}
         </div>
-
         <Separator />
 
         <ScrollArea className="flex-1 space-y-2 p-4">
@@ -286,7 +279,24 @@ export default function WorkspaceSidebar() {
             </DialogContent>
           </Dialog>
         </div>
+
+        {/* ----------- INVITE & SHARE CODE MODALS ----------- */}
+        {currentTeam && (
+          <>
+            <InviteModal
+              open={showInvite}
+              onClose={() => setShowInvite(false)}
+              teamId={currentTeam.id}
+            />
+            <ShareCodeModal
+              open={showCode}
+              onClose={() => setShowCode(false)}
+              teamId={currentTeam.id}
+            />
+          </>
+        )}
       </div>
     </SidebarProvider>
   );
 }
+
