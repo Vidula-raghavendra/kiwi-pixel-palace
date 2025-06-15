@@ -33,42 +33,27 @@ function SidebarSection({ label, icon, children }: { label: string, icon: React.
 }
 
 export default function WorkspaceSidebar() {
-  // Safely handle missing AuthContext
-  let profile, signOut, authLoading;
-  try {
-    const auth = useAuth();
-    profile = auth.profile;
-    signOut = auth.signOut;
-    authLoading = auth.loading;
-  } catch (e) {
-    console.error("WorkspaceSidebar: AuthContext not available, redirecting...");
-    // If AuthContext is missing, this component shouldn't render
-    return null;
-  }
+  // Safely handle missing AuthContext with error boundary
+  const { profile, signOut, loading: authLoading } = useAuth();
 
   // Safely handle missing TeamsContext
-  let teams, currentTeam, setCurrentTeam, teamMembers, fetchTeamMembers, loading;
-  try {
-    const teamHook = useTeams();
-    teams = teamHook.teams;
-    currentTeam = teamHook.currentTeam;
-    setCurrentTeam = teamHook.setCurrentTeam;
-    teamMembers = teamHook.teamMembers;
-    fetchTeamMembers = teamHook.fetchTeamMembers;
-    loading = teamHook.loading;
-  } catch (e) {
-    console.error("WorkspaceSidebar: TeamsContext not available");
-    return null;
-  }
+  const { 
+    teams, 
+    currentTeam, 
+    setCurrentTeam, 
+    teamMembers, 
+    fetchTeamMembers, 
+    loading: teamsLoading 
+  } = useTeams();
 
   // Invite/Share/Members panel logic
   const teamId = currentTeam?.id;
   const {
-    canDeleteTeam, // "Delete" if you're team creator
+    canDeleteTeam,
     handleLeaveTeam,
     handleDeleteTeam,
     loading: panelLoading,
-  } = useTeamSidebarPanel({ teamId: teamId || "" as any });
+  } = useTeamSidebarPanel({ teamId: teamId || "" });
   const { toast } = useToast();
 
   // For Invite section
@@ -174,10 +159,10 @@ export default function WorkspaceSidebar() {
       <div className="w-9 h-9 flex items-center justify-center rounded-full border border-[#badc5b] bg-[#fdfae8] text-[#8bb47e]"><User size={17} /></div>;
 
   // Show current team (fallback first team)
-  const displayTeam = currentTeam || teams[0];
+  const displayTeam = currentTeam || teams?.[0];
 
   // In case teams and currentTeam are both not loaded, show a loader early to prevent blank crash
-  if (!displayTeam && loading) {
+  if (!displayTeam && teamsLoading) {
     return (
       <aside className="bg-[#fffde8] border-r border-[#badc5b] min-w-[250px] max-w-[270px] flex flex-col justify-between h-screen z-30 shadow-lg">
         <div className="flex flex-col items-center justify-center h-full">
@@ -186,7 +171,7 @@ export default function WorkspaceSidebar() {
       </aside>
     );
   }
-  if (!displayTeam && !loading) {
+  if (!displayTeam && !teamsLoading) {
     return (
       <aside className="bg-[#fffde8] border-r border-[#badc5b] min-w-[250px] max-w-[270px] flex flex-col justify-center items-center h-screen z-30 shadow-lg">
         <span className="pixel-font text-red-500 text-sm mt-10">No team context available.<br />Please join or create a team.</span>
@@ -194,11 +179,10 @@ export default function WorkspaceSidebar() {
     );
   }
 
-  React.useEffect(() => {
-    if (!currentTeam && teams.length > 0) setCurrentTeam(teams[0]);
-    if (displayTeam) fetchTeamMembers(displayTeam.id);
-    // eslint-disable-next-line
-  }, [displayTeam?.id]);
+  useEffect(() => {
+    if (!currentTeam && teams && teams.length > 0) setCurrentTeam(teams[0]);
+    if (displayTeam && fetchTeamMembers) fetchTeamMembers(displayTeam.id);
+  }, [displayTeam?.id, currentTeam, teams, setCurrentTeam, fetchTeamMembers]);
 
   return (
     <aside className="bg-[#fffde8] border-r border-[#badc5b] min-w-[250px] max-w-[270px] flex flex-col justify-between h-screen z-30 shadow-lg">
@@ -254,6 +238,7 @@ export default function WorkspaceSidebar() {
               )}
             </div>
           </SidebarSection>
+          
           <SidebarSection label="Invite Members" icon={<Plus size={18} />}>
             <form onSubmit={handleInvite} className="flex flex-col gap-2">
               <label className="pixel-font text-xs text-[#8bb47e]">Email</label>
@@ -280,6 +265,7 @@ export default function WorkspaceSidebar() {
               </Button>
             </form>
           </SidebarSection>
+          
           <SidebarSection label="Share Join Code" icon={<Copy size={18} />}>
             <div className="pixel-font text-[#8bb47e] text-xs mb-2">Share this code to let others join your team:</div>
             <div className="flex flex-row items-center gap-2">
@@ -289,7 +275,7 @@ export default function WorkspaceSidebar() {
                 onClick={handleCopyCode}
                 tabIndex={0}
               >
-                {copy ? <Copy size={15}/> : <Copy size={15}/>}
+                <Copy size={15}/>
               </Button>
             </div>
             <Button
