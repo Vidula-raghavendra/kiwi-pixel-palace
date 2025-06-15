@@ -1,14 +1,146 @@
 
-import React from "react";
-import { LogOut, Users, User } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { LogOut, Users, User, Copy, Plus, Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTeams } from "@/hooks/useTeams";
+import { useTeamSidebarPanel } from "@/hooks/useTeamSidebarPanel";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+
+// Collapsible section helper component
+function SidebarSection({ label, icon, children }: { label: string, icon: React.ReactNode, children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="w-full mb-2">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className={`flex flex-row items-center w-full gap-2 px-2 py-2 rounded-lg bg-[#e8f6da] pixel-font text-[#233f24] hover:bg-[#d5f3c2] transition-colors focus:outline-none border-b border-[#badc5b]`}
+        style={{outline: 0}}
+      >
+        <span className="mr-2">{icon}</span>
+        <span className="flex-1 text-left">{label}</span>
+        <span>{open ? "▲" : "▼"}</span>
+      </button>
+      {open && (
+        <div className="bg-[#f7ffe1] p-3 rounded-lg shadow-inner animate-fade-in">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function WorkspaceSidebar() {
   const { profile, signOut } = useAuth();
   const { teams, currentTeam, setCurrentTeam, teamMembers, fetchTeamMembers, loading } = useTeams();
+
+  // Invite/Share/Members panel logic
+  const teamId = currentTeam?.id;
+  const {
+    canDeleteTeam,
+    handleLeaveTeam,
+    handleDeleteTeam,
+    loading: panelLoading,
+  } = useTeamSidebarPanel({ teamId: teamId || "" as any });
+  const { toast } = useToast();
+
+  // For Invite section
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteGithub, setInviteGithub] = useState("");
+  const [inviteLoading, setInviteLoading] = useState(false);
+
+  async function handleInvite(e: React.FormEvent) {
+    e.preventDefault();
+    setInviteLoading(true);
+    if (!inviteEmail && !inviteGithub) {
+      toast({ title: "Enter email or GitHub username." });
+      setInviteLoading(false);
+      return;
+    }
+    let invited_by = null;
+    try {
+      const { data, error } = await supabase.auth.getUser();
+      if (error || !data?.user?.id) throw new Error("Not authenticated");
+      invited_by = data.user.id;
+    } catch (err: any) {
+      toast({ title: "Failed to get current user", description: err.message, variant: "destructive" });
+      setInviteLoading(false);
+      return;
+    }
+    const { error } = await supabase.from("team_invitations").insert({
+      team_id: teamId,
+      email: inviteEmail || null,
+      github_username: inviteGithub || null,
+      invited_by,
+    });
+    if (!error) {
+      toast({ title: "Invite sent!" });
+      setInviteEmail("");
+      setInviteGithub("");
+    } else {
+      toast({ title: "Invite failed", description: error.message, variant: "destructive" });
+    }
+    setInviteLoading(false);
+  }
+
+  // For Share join code
+  const [teamCode, setTeamCode] = useState("");
+  const [copy, setCopy] = useState(false);
+
+  useEffect(() => {
+    if (teamId) {
+      supabase
+        .from("teams")
+        .select("team_code")
+        .eq("id", teamId)
+        .maybeSingle()
+        .then(({ data }) => setTeamCode(data?.team_code || ""));
+      setCopy(false);
+    }
+  }, [teamId]);
+
+  async function handleCopyCode() {
+    if (teamCode) {
+      await navigator.clipboard.writeText(teamCode);
+      setCopy(true);
+      toast({ title: "Copied!" });
+      setTimeout(() => setCopy(false), 1200);
+    }
+  }
+  async function handleRegenerateCode() {
+    const newCode = (Math.random().toString(36).substring(2, 10) + Date.now().toString()).replace(/[^a-zA-Z0-9]/g, "").slice(0, 8).toUpperCase();
+    const { error } = await supabase.from("teams").update({ team_code: newCode }).eq("id", teamId);
+    if (!error) {
+      setTeamCode(newCode);
+      toast({ title: "New code generated!" });
+      setCopy(false);
+    }
+  }
+
+  // For Members section
+  const [members, setMembers] = useState<any[]>([]);
+  const [membersLoading, setMembersLoading] = useState(false);
+
+  useEffect(() => {
+    if (teamId) {
+      setMembersLoading(true);
+      async function fetchMembersList() {
+        try {
+          const { data } = await supabase
+            .from("team_members")
+            .select("user_id, role, profiles:profiles!team_members_user_id_fkey(full_name, avatar_url, github_username)")
+            .eq("team_id", teamId);
+          setMembers(data || []);
+        } finally {
+          setMembersLoading(false);
+        }
+      }
+      fetchMembersList();
+    }
+  }, [teamId]);
 
   // Display avatar
   const Avatar = ({ src, alt }: { src?: string | null, alt: string }) =>
@@ -26,7 +158,7 @@ export default function WorkspaceSidebar() {
   }, [displayTeam?.id]);
 
   return (
-    <aside className="bg-[#fffde8] border-r border-[#badc5b] min-w-[235px] max-w-[235px] flex flex-col justify-between h-screen z-30 shadow-lg">
+    <aside className="bg-[#fffde8] border-r border-[#badc5b] min-w-[250px] max-w-[270px] flex flex-col justify-between h-screen z-30 shadow-lg">
       {/* Profile Area */}
       <div>
         <div className="flex flex-row items-center px-6 py-5 gap-3 border-b border-[#ecf2c7]">
@@ -50,38 +182,106 @@ export default function WorkspaceSidebar() {
           </div>
         </div>
 
-        {/* Team Members */}
-        <div className="px-3 py-2 mt-1">
-          <div className="pixel-font text-xs text-[#8bb47e] mb-1 ml-2">Members</div>
-          <ul className="flex flex-col gap-3">
-            {loading ? (
-              Array(3).fill(0).map((_, idx) =>
-                <li key={idx} className="flex flex-row items-center gap-2 ml-1">
-                  <Skeleton className="h-7 w-7 rounded-full bg-[#ecf2c7]" />
-                  <Skeleton className="h-4 w-20 bg-[#e2fde4]" />
-                </li>
-              )
-            ) : (
-              teamMembers.map((m) => (
-                <li key={m.user_id} className="flex flex-row items-center gap-2 ml-1">
-                  <Avatar src={m.profiles?.avatar_url} alt={m.profiles?.full_name || "Member"} />
-                  <div>
-                    <div className="text-sm text-[#233f24] font-medium">
-                      {m.profiles?.full_name || m.profiles?.github_username || "Kiwi"}
-                    </div>
-                    {m.role && <div className="text-slate-400 text-xs">{m.role}</div>}
+        {/* Collapsible sections for Members, Invite, Share Code */}
+        <div className="px-2 py-1">
+          <SidebarSection label="Team Members" icon={<Users size={18} />}>
+            <div className="flex flex-col gap-3">
+              {membersLoading
+                ? Array(3).fill(0).map((_, i) => (
+                  <div className="flex items-center gap-2" key={i}>
+                    <Skeleton className="h-7 w-7 rounded-full" />
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-4 w-10" />
                   </div>
-                </li>
-              ))
-            )}
-          </ul>
+                ))
+                : members.map((m, i) => (
+                  <div className="flex items-center gap-3" key={m.user_id || i}>
+                    {m.profiles?.avatar_url
+                      ? <img src={m.profiles.avatar_url} alt="Avatar" className="w-7 h-7 rounded-full border border-[#badc5b] bg-[#fbfff1]" />
+                      : <div className="w-7 h-7 rounded-full bg-[#fafafa] border border-[#badc5b] flex items-center justify-center text-[#badc5b]"><Users size={15} /></div>
+                    }
+                    <div>
+                      <div className="pixel-font text-xs text-[#233f24]">{m.profiles?.full_name || m.profiles?.github_username || "User"}</div>
+                      <div className="text-xs text-[#8bb47e]">{m.role}</div>
+                    </div>
+                  </div>
+                ))}
+              {!membersLoading && members.length === 0 && (
+                <div className="text-xs text-muted-foreground">No members found.</div>
+              )}
+            </div>
+          </SidebarSection>
+          <SidebarSection label="Invite Members" icon={<Plus size={18} />}>
+            <form onSubmit={handleInvite} className="flex flex-col gap-2">
+              <label className="pixel-font text-xs text-[#8bb47e]">Email</label>
+              <Input
+                autoFocus
+                type="email"
+                className="pixel-font bg-[#fffbe8] border-[#badc5b]"
+                placeholder="friend@email.com"
+                value={inviteEmail}
+                onChange={e => setInviteEmail(e.target.value)}
+                maxLength={80}
+              />
+              <label className="pixel-font text-xs text-[#8bb47e] mt-1">GitHub username</label>
+              <Input
+                type="text"
+                className="pixel-font bg-[#fffbe8] border-[#badc5b]"
+                placeholder="github-username"
+                value={inviteGithub}
+                onChange={e => setInviteGithub(e.target.value)}
+                maxLength={39}
+              />
+              <Button disabled={inviteLoading} type="submit" className="mt-2 pixel-font bg-[#badc5b] text-[#233f24] w-full hover:brightness-95">
+                {inviteLoading ? "Sending..." : "Send Invite"}
+              </Button>
+            </form>
+          </SidebarSection>
+          <SidebarSection label="Share Join Code" icon={<Copy size={18} />}>
+            <div className="pixel-font text-[#8bb47e] text-xs mb-2">Share this code to let others join your team:</div>
+            <div className="flex flex-row items-center gap-2">
+              <Input className="pixel-font text-lg bg-[#fffbe8] border-[#badc5b]" value={teamCode} readOnly />
+              <Button
+                className="flex gap-1 bg-[#dbe186] hover:bg-[#badc5b] text-[#233f24] rounded"
+                onClick={handleCopyCode}
+                tabIndex={0}
+              >
+                {copy ? <Copy size={15}/> : <Copy size={15}/>}
+              </Button>
+            </div>
+            <Button
+              className="w-full pixel-font text-xs mt-2 bg-[#badc5b] text-[#233f24]"
+              onClick={handleRegenerateCode}
+            >
+              Generate New Code
+            </Button>
+          </SidebarSection>
         </div>
       </div>
 
+      {/* Leave or Delete team actions */}
       <div className="mb-6 px-6">
+        {canDeleteTeam ? (
+          <Button
+            className="w-full flex gap-2 pixel-font text-red-600 border border-red-300 bg-[#fbeeee] hover:bg-[#fbdddd]"
+            onClick={handleDeleteTeam}
+            disabled={panelLoading}
+          >
+            <Trash2 size={16} /> Delete Team
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            className="w-full flex gap-2 pixel-font text-[#ad9271] border-[#ad9271]"
+            onClick={handleLeaveTeam}
+            disabled={panelLoading}
+          >
+            <Trash2 size={16} /> Leave Team
+          </Button>
+        )}
         <Button
           variant="outline"
-          className="w-full flex gap-2 items-center pixel-outline text-[#ad9271] hover:bg-[#fff6eb] border-2 border-[#ad9271]"
+          className="w-full flex gap-2 items-center pixel-outline text-[#ad9271] hover:bg-[#fff6eb] border-2 border-[#ad9271] mt-4"
           onClick={signOut}
         >
           <LogOut size={17} /> Log out

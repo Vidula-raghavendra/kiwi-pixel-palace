@@ -39,8 +39,7 @@ export default function WorkspaceRoom() {
           </div>
           {/* Right column */}
           <div className="flex flex-col gap-4 min-w-[320px] w-[340px] relative">
-            {/* New sidebar panel (ALWAYS SHOWS) */}
-            <WorkspaceSidebarPanel teamId={undefined as any} />
+            {/* WorkspaceSidebarPanel removed */}
             {/* Top-right: To Do */}
             <PixelTodo />
             {/* Bottom-right: Team Chatroom */}
