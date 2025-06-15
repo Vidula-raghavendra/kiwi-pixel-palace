@@ -1,5 +1,5 @@
 
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -37,13 +37,22 @@ export function useTeamPresence({
         const state: any = channel.presenceState();
         presenceState.current = {};
         for (const [uid, arr] of Object.entries<{ path: string; updated_at: string }[]>(state)) {
-          presenceState.current[uid] = arr[0];
+          if (arr[0] && typeof arr[0].path === "string" && typeof arr[0].updated_at === "string") {
+            presenceState.current[uid] = arr[0];
+          }
         }
         forceUpdate();
       })
       .on("presence", { event: "join" }, ({ key, newPresences }) => {
-        presenceState.current[key] = newPresences[0];
-        forceUpdate();
+        if (
+          newPresences &&
+          newPresences[0] &&
+          typeof newPresences[0].path === "string" &&
+          typeof newPresences[0].updated_at === "string"
+        ) {
+          presenceState.current[key] = newPresences[0];
+          forceUpdate();
+        }
       })
       .on("presence", { event: "leave" }, ({ key }) => {
         delete presenceState.current[key];
@@ -82,3 +91,4 @@ export function useTeamPresence({
 
   return presenceState.current;
 }
+
