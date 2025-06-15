@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTeams } from "@/hooks/useTeams";
@@ -7,42 +8,22 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MoreVertical, Plus, Users, UserPlus, Share2 } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
-import { useTeamSidebarPanel } from "@/hooks/useTeamSidebarPanel";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useTeamSidebarPanel } from "@/hooks/useTeamSidebarPanel";
 import { useToast } from "@/hooks/use-toast";
 import { useProjects } from "@/hooks/useProjects";
 import InviteModal from "@/components/ui/InviteModal";
 import ShareCodeModal from "@/components/ui/ShareCodeModal";
+import { useTeamPresence } from "@/hooks/useTeamPresence";
+import { User as UserIcon } from "lucide-react";
+import { Plus, Users, Share2 } from "lucide-react";
+
+// New: show profile presence modal state
+type Member = any;
 
 export default function WorkspaceSidebar() {
   const auth = useAuth();
@@ -76,14 +57,24 @@ export default function WorkspaceSidebar() {
   } = teams;
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { createProject } = useProjects();
   const [projectName, setProjectName] = React.useState("");
   const [projectDesc, setProjectDesc] = React.useState("");
+  const [selectedMember, setSelectedMember] = React.useState<Member | null>(null);
+  const [showMemberPresence, setShowMemberPresence] = React.useState(false);
 
   // ---- NEW MODAL LOGIC ----
   const [showInvite, setShowInvite] = React.useState(false);
   const [showCode, setShowCode] = React.useState(false);
+
+  // MVP: use presence for current team
+  const presence = useTeamPresence({
+    teamId: currentTeam?.id,
+    userId: user?.id,
+    path: location.pathname,
+  });
 
   // Team panel actions
   const {
@@ -96,7 +87,6 @@ export default function WorkspaceSidebar() {
     loading: teamPanelLoading,
   } = useTeamSidebarPanel({ teamId: currentTeam?.id || "" });
 
-  // Improved redirect logic: Only redirect **after** allTeams finished loading and user tried to view a workspace
   React.useEffect(() => {
     // Add defensive logging so we see state during navigation
     console.log("[WorkspaceSidebar] Effect: id, allTeams, loading", {
@@ -114,7 +104,6 @@ export default function WorkspaceSidebar() {
       if (team) {
         setCurrentTeam(team);
       } else if (allTeams.length > 0) {
-        // Only redirect if we DO have teams (i.e. the user is in teams but not in this specific one)
         toast({
           title: "Team not found",
           description: "Redirecting to workspace...",
@@ -193,9 +182,14 @@ export default function WorkspaceSidebar() {
           </div>
           {teamMembers && teamMembers.length > 0 ? (
             teamMembers.map((member) => (
-              <div
+              <button
                 key={member.id}
-                className="flex items-center space-x-2 py-2"
+                type="button"
+                className="flex items-center space-x-2 py-2 hover:bg-[#e2fde4] rounded w-full mb-1 transition pixel-font text-left"
+                onClick={() => {
+                  setSelectedMember(member);
+                  setShowMemberPresence(true);
+                }}
               >
                 <Avatar className="h-6 w-6">
                   <AvatarImage src={member.profiles?.avatar_url || ""} />
@@ -205,12 +199,15 @@ export default function WorkspaceSidebar() {
                       "KI"}
                   </AvatarFallback>
                 </Avatar>
-                <span className="pixel-font text-xs text-[#7b6449]">
-                  {member.profiles?.full_name ||
-                    member.profiles?.username ||
-                    "Kiwi User"}
-                </span>
-              </div>
+                <div className="flex flex-col items-start">
+                  <span className="pixel-font text-xs text-[#7b6449]">
+                    {member.profiles?.full_name ||
+                      member.profiles?.username ||
+                      "Kiwi User"}
+                  </span>
+                  <span className="text-xs text-[#ad9271]">{member.role}</span>
+                </div>
+              </button>
             ))
           ) : (
             <div className="pixel-font text-xs text-[#ad9271]">
@@ -219,47 +216,104 @@ export default function WorkspaceSidebar() {
           )}
         </ScrollArea>
 
+        {/* Presence Modal for a member */}
+        {selectedMember && (
+          <Dialog open={showMemberPresence} onOpenChange={setShowMemberPresence}>
+            <DialogContent>
+              <DialogTitle className="pixel-font text-[#233f24]">
+                {selectedMember.profiles?.full_name ||
+                  selectedMember.profiles?.username ||
+                  "Kiwi User"}
+              </DialogTitle>
+              <div className="mb-3 text-xs text-[#7b6449]">
+                <span className="mr-2">Role:</span>
+                <span className="pixel-font text-[#ad9271]">{selectedMember.role}</span>
+              </div>
+              <div className="flex items-center gap-2 mb-2">
+                {selectedMember.profiles?.avatar_url ? (
+                  <img
+                    src={selectedMember.profiles.avatar_url}
+                    alt="Avatar"
+                    className="w-10 h-10 rounded-full border border-[#badc5b]"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-[#fafafa] border border-[#badc5b] flex items-center justify-center text-[#badc5b]">
+                    <UserIcon size={22} />
+                  </div>
+                )}
+                <div>
+                  <span className="pixel-font text-xs text-[#8bb47e]">
+                    {selectedMember.profiles?.github_username && (
+                      <>GitHub: <span className="font-mono text-[#233f24]">{selectedMember.profiles.github_username}</span></>
+                    )}
+                  </span>
+                </div>
+              </div>
+              <div className="mt-4 mb-2">
+                {presence[selectedMember.user_id] && presence[selectedMember.user_id].path ? (
+                  <div className="pixel-font text-[#233f24]">
+                    <span className="text-[#ad9271]">Current page: </span>
+                    <span className="font-bold">{presence[selectedMember.user_id].path}</span>
+                  </div>
+                ) : (
+                  <div className="pixel-font text-[#ad9271] text-sm">
+                    (Current page not visible)
+                  </div>
+                )}
+                {presence[selectedMember.user_id]?.updated_at && (
+                  <div className="text-xs mt-1 text-[#ad9271]">
+                    Last updated: {new Date(presence[selectedMember.user_id]?.updated_at).toLocaleTimeString()}
+                  </div>
+                )}
+              </div>
+              <Button onClick={() => setShowMemberPresence(false)} className="pixel-font">
+                Close
+              </Button>
+            </DialogContent>
+          </Dialog>
+        )}
+
         <Separator />
 
         <div className="p-4">
           {/* Add Project dialog stays at bottom */}
           <Dialog>
-            <DialogTrigger asChild>
+            <Dialog.Trigger asChild>
               <Button className="w-full pixel-font bg-[#8bb47e] hover:bg-[#92c993] text-[#233f24]">
                 <Plus className="mr-2 h-4 w-4" />
                 Add Project
               </Button>
-            </DialogTrigger>
+            </Dialog.Trigger>
             <DialogContent className="sm:max-w-[425px] bg-[#f7ffe1] border-[#badc5b]">
-              <DialogHeader>
+              <div className="flex flex-col gap-2">
                 <DialogTitle className="pixel-font text-lg text-[#233f24]">
                   Create Project
                 </DialogTitle>
-                <DialogDescription className="pixel-font text-sm text-[#7b6449]">
+                <div className="pixel-font text-sm text-[#7b6449]">
                   Make sure to set a descriptive name and description.
-                </DialogDescription>
-              </DialogHeader>
+                </div>
+              </div>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="name" className="pixel-font text-sm text-[#233f24]">
+                  <label htmlFor="name" className="pixel-font text-sm text-[#233f24]">
                     Project name
-                  </Label>
-                  <Input
+                  </label>
+                  <input
                     id="name"
                     value={projectName}
                     onChange={(e) => setProjectName(e.target.value)}
-                    className="bg-[#fffde8] border-[#ad9271]"
+                    className="bg-[#fffde8] border-[#ad9271] rounded px-2 py-1"
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="description" className="pixel-font text-sm text-[#233f24]">
+                  <label htmlFor="description" className="pixel-font text-sm text-[#233f24]">
                     Description
-                  </Label>
-                  <Textarea
+                  </label>
+                  <textarea
                     id="description"
                     value={projectDesc}
                     onChange={(e) => setProjectDesc(e.target.value)}
-                    className="bg-[#fffde8] border-[#ad9271]"
+                    className="bg-[#fffde8] border-[#ad9271] rounded px-2 py-1"
                   />
                 </div>
               </div>
