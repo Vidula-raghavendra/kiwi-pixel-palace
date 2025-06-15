@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
  * Publishes the user's current route and subscribes to updates from team members.
  * Returns an object { [user_id]: { path, updated_at } }
  */
+type PresenceInfo = { path: string; updated_at: string };
+
 export function useTeamPresence({
   teamId,
   userId,
@@ -14,10 +16,9 @@ export function useTeamPresence({
   teamId: string | null | undefined;
   userId: string | null | undefined;
   path: string;
-}) {
-  const presenceState = useRef<{ [userId: string]: { path: string; updated_at: string } }>(
-    {}
-  );
+}): { [userId: string]: PresenceInfo } {
+  // Force typing so we ONLY store those objects that match `PresenceInfo`
+  const presenceState = useRef<{ [userId: string]: PresenceInfo }>({});
   const listeners = useRef<(() => void)[]>([]);
   const [_, forceUpdate] = React.useReducer((x) => x + 1, 0);
 
@@ -34,23 +35,30 @@ export function useTeamPresence({
 
     channel
       .on("presence", { event: "sync" }, () => {
-        const state: any = channel.presenceState();
-        presenceState.current = {};
-        for (const [uid, arr] of Object.entries<{ path: string; updated_at: string }[]>(state)) {
-          if (arr[0] && typeof arr[0].path === "string" && typeof arr[0].updated_at === "string") {
-            presenceState.current[uid] = arr[0];
+        const state: Record<string, any[]> = channel.presenceState();
+        const sanitized: { [userId: string]: PresenceInfo } = {};
+        for (const [uid, arr] of Object.entries(state)) {
+          // Make sure it's actually an object with the right fields
+          const item = arr && arr[0];
+          if (
+            item &&
+            typeof item.path === "string" &&
+            typeof item.updated_at === "string"
+          ) {
+            sanitized[uid] = { path: item.path, updated_at: item.updated_at };
           }
         }
+        presenceState.current = sanitized;
         forceUpdate();
       })
       .on("presence", { event: "join" }, ({ key, newPresences }) => {
+        const item = newPresences && newPresences[0];
         if (
-          newPresences &&
-          newPresences[0] &&
-          typeof newPresences[0].path === "string" &&
-          typeof newPresences[0].updated_at === "string"
+          item &&
+          typeof item.path === "string" &&
+          typeof item.updated_at === "string"
         ) {
-          presenceState.current[key] = newPresences[0];
+          presenceState.current[key] = { path: item.path, updated_at: item.updated_at };
           forceUpdate();
         }
       })
@@ -91,4 +99,3 @@ export function useTeamPresence({
 
   return presenceState.current;
 }
-
