@@ -1,10 +1,9 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useState } from "react";
 
 /**
  * Modal that shows team members, their avatar, role, and LLM choice.
@@ -17,12 +16,20 @@ export default function ViewMembersModal({ open, onClose, teamId }: { open: bool
   useEffect(() => {
     if (!open || !teamId) return;
     setLoading(true);
-    supabase
-      .from("team_members")
-      .select("user_id, role, profiles:profiles!team_members_user_id_fkey(full_name, avatar_url, github_username)")
-      .eq("team_id", teamId)
-      .then(({ data }) => setMembers(data || []))
-      .finally(() => setLoading(false));
+
+    async function fetchMembers() {
+      try {
+        const { data } = await supabase
+          .from("team_members")
+          .select("user_id, role, profiles:profiles!team_members_user_id_fkey(full_name, avatar_url, github_username)")
+          .eq("team_id", teamId);
+        setMembers(data || []);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchMembers();
   }, [open, teamId]);
 
   return (

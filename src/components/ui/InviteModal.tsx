@@ -25,12 +25,25 @@ export default function InviteModal({ open, onClose, teamId }: { open: boolean, 
       setLoading(false);
       return;
     }
+    // Get user id
+    let invited_by = null;
+    try {
+      const { data, error } = await supabase.auth.getUser();
+      if (error || !data?.user?.id) {
+        throw new Error("Not authenticated");
+      }
+      invited_by = data.user.id;
+    } catch (err: any) {
+      toast({ title: "Failed to get current user", description: err.message, variant: "destructive" });
+      setLoading(false);
+      return;
+    }
     // Call invite API
     const { error } = await supabase.from("team_invitations").insert({
       team_id: teamId,
       email: email || null,
       github_username: github || null,
-      invited_by: supabase.auth.getUser().data.user?.id,
+      invited_by,
     });
     if (!error) {
       toast({ title: "Invite sent!" });
