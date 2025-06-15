@@ -51,6 +51,7 @@ export const useTeams = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
   const mounted = useRef(true);
+  const channelRef = useRef<any>(null);
 
   // Ensure hook is only used in valid context
   useEffect(() => {
@@ -60,63 +61,75 @@ export const useTeams = () => {
     };
   }, []);
 
-  // Set up realtime subscription
+  // Clean up any existing channels before creating new ones
+  const cleanupChannels = () => {
+    if (channelRef.current) {
+      try {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+        console.log("[Teams] Cleaned up existing channel");
+      } catch (error) {
+        console.warn('Error cleaning up channel:', error);
+      }
+    }
+  };
+
+  // Set up realtime subscription with proper cleanup
   useEffect(() => {
     if (!user || !mounted.current) return;
 
-    let channel: any = null;
-    const channelName = "teams_members_presence_" + user.id;
+    // Clean up any existing channels first
+    cleanupChannels();
 
-    // Clean up old channels
+    const channelName = `teams_members_presence_${user.id}`;
+
     try {
-      const existingChannels = supabase.getChannels();
-      const oldChannel = existingChannels.find(ch => ch.topic === `realtime:${channelName}`);
-      if (oldChannel) {
-        supabase.removeChannel(oldChannel);
-      }
+      channelRef.current = supabase
+        .channel(channelName)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'team_members', filter: `user_id=eq.${user.id}` },
+          (payload) => {
+            if (mounted.current) {
+              console.log("[Teams] Received team_members event for user", payload);
+              // Use setTimeout to prevent WebSocket connection issues
+              setTimeout(() => {
+                if (mounted.current) {
+                  fetchTeams();
+                }
+              }, 100);
+            }
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'team_members' },
+          (payload) => {
+            if (mounted.current && currentTeam) {
+              console.log("[Teams] Received team_members event for currentTeam", payload);
+              setTimeout(() => {
+                if (mounted.current && currentTeam) {
+                  fetchTeamMembers(currentTeam.id);
+                }
+              }, 100);
+            }
+          }
+        )
+        .subscribe((status, err) => {
+          if (status === "SUBSCRIBED") {
+            console.log("[Teams] Subscribed to realtime channel:", channelName);
+          } else if (status === "CLOSED") {
+            console.log("[Teams] Channel closed:", channelName);
+          } else if (err) {
+            console.warn("[Teams] Subscription failed:", err);
+          }
+        });
     } catch (error) {
-      console.warn('Error cleaning up old channels:', error);
+      console.warn('Error setting up realtime channel:', error);
     }
 
-    channel = supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'team_members', filter: `user_id=eq.${user.id}` },
-        (payload) => {
-          if (mounted.current) {
-            console.log("[Teams] Received team_members event for user", payload);
-            fetchTeams();
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'team_members' },
-        (payload) => {
-          if (mounted.current && currentTeam) {
-            console.log("[Teams] Received team_members event for currentTeam", payload);
-            fetchTeamMembers(currentTeam.id);
-          }
-        }
-      )
-      .subscribe((status, err) => {
-        if (status === "SUBSCRIBED") {
-          console.log("[Teams] Subscribed to realtime channel:", channelName);
-        } else if (err) {
-          console.warn("[Teams] Sub failed:", err);
-        }
-      });
-
     return () => {
-      if (channel && mounted.current) {
-        try {
-          supabase.removeChannel(channel);
-          console.log("[Teams] Cleaned up channel:", channelName);
-        } catch (error) {
-          console.warn('Error removing channel:', error);
-        }
-      }
+      cleanupChannels();
     };
   }, [user?.id]); // Only depend on user.id
 
@@ -275,7 +288,12 @@ export const useTeams = () => {
           title: "Team Created",
           description: `Team "${name}" created! Code: ${teamCode}`,
         });
-        await fetchTeams();
+        // Wait a bit before fetching to ensure database consistency
+        setTimeout(() => {
+          if (mounted.current) {
+            fetchTeams();
+          }
+        }, 500);
       }
       
       return teamInserted;
@@ -332,8 +350,13 @@ export const useTeams = () => {
           title: "Joined Team",
           description: `You've joined "${team.name}"!`,
         });
-        await fetchTeams();
-        setCurrentTeam(team);
+        // Wait a bit before fetching to ensure database consistency
+        setTimeout(() => {
+          if (mounted.current) {
+            fetchTeams();
+            setCurrentTeam(team);
+          }
+        }, 500);
       }
       
       return team;
