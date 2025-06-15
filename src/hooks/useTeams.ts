@@ -106,12 +106,12 @@ export const useTeams = () => {
               if (mounted.current && currentTeam) setTimeout(() => fetchTeamMembers(currentTeam.id), 100);
             }
           );
-        channelRef.current.subscribe((status: string) => {
+        channelRef.current.subscribe((status: string, error?: any) => {
           if (status === "SUBSCRIBED") {
             console.log("[Teams] Channel subscribed");
             subscriptionActive.current = true;
           } else if (status === "CHANNEL_ERROR") {
-            console.warn("[Teams] Channel error");
+            console.error("[Teams] Error subscribing to realtime:", error);
             subscriptionActive.current = false;
           } else if (status === "CLOSED") {
             console.log("[Teams] Channel closed");
