@@ -13,39 +13,19 @@ import { useParams, useNavigate } from "react-router-dom";
 export default function WorkspaceRoom() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
-  const { teams, currentTeam, setCurrentTeam, loading: teamsLoading } = useTeams();
-  const [error, setError] = useState<string>("");
+  const { user } = useAuth();
+  const { teams, currentTeam, setCurrentTeam, loading } = useTeams();
 
-  console.log('WorkspaceRoom render:', { 
-    id, 
-    user: !!user, 
-    authLoading, 
-    teamsLoading, 
-    teamsCount: teams?.length, 
-    currentTeam: currentTeam?.id 
-  });
-
-  // Set current team when we have the team ID and teams are loaded
   useEffect(() => {
-    if (id && teams && teams.length > 0 && !teamsLoading) {
+    if (id && teams && teams.length > 0) {
       const targetTeam = teams.find(t => t.id === id);
-      console.log('Looking for team:', id, 'found:', !!targetTeam);
-      
       if (targetTeam) {
-        if (!currentTeam || currentTeam.id !== id) {
-          console.log('Setting current team to:', targetTeam.name);
-          setCurrentTeam(targetTeam);
-        }
-      } else {
-        console.log('Team not found, setting error');
-        setError("Team not found or you are not a member.");
+        setCurrentTeam(targetTeam);
       }
     }
-  }, [id, teams, teamsLoading, currentTeam, setCurrentTeam]);
+  }, [id, teams, setCurrentTeam]);
 
-  // Show loading while auth or teams are loading
-  if (authLoading || teamsLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#e2fde4]">
         <div className="pixel-font text-lg text-[#233f24]">Loading workspace...</div>
@@ -53,35 +33,22 @@ export default function WorkspaceRoom() {
     );
   }
 
-  // Show error if we have one
-  if (error) {
-    return (
-      <div className="flex flex-col min-h-screen w-full items-center justify-center bg-[#e2fde4]">
-        <div className="pixel-font text-red-700 text-lg">
-          {error}<br />
-          <span className="text-xs text-[#ad9271]">
-            <button className="underline" onClick={() => navigate("/home")}>Return to dashboard</button>
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-  // If user has no teams, redirect to home
   if (!teams || teams.length === 0) {
     return (
       <div className="flex flex-col min-h-screen w-full items-center justify-center bg-[#e2fde4]">
         <div className="pixel-font text-[#ad9271] text-lg">
-          You are not part of any team yet.<br />
-          <span className="text-xs text-[#ad9271]">
-            <button className="underline" onClick={() => navigate("/home")}>Create or join a team</button>
-          </span>
+          No teams found. Please create or join a team first.
         </div>
+        <button 
+          className="underline text-xs text-[#ad9271] mt-2" 
+          onClick={() => navigate("/home")}
+        >
+          Go to Dashboard
+        </button>
       </div>
     );
   }
 
-  // Use current team or fallback to first team
   const displayTeam = currentTeam || teams[0];
 
   return (

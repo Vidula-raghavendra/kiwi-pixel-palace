@@ -32,31 +32,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
 
   useEffect(() => {
-    console.log('AuthProvider: Setting up auth state listener');
-    
-    // Get initial session immediately
+    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session check:', session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
       
-      // Fetch profile in background if user exists
       if (session?.user) {
         fetchProfile(session.user.id);
       }
     });
 
-    // Set up auth state listener
+    // Set up auth listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state change:', event, session?.user?.id);
+      (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        if (session?.user && event !== 'SIGNED_OUT') {
+        if (session?.user) {
           fetchProfile(session.user.id);
-        } else if (event === 'SIGNED_OUT') {
+        } else {
           setProfile(null);
         }
         
@@ -64,15 +59,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    return () => {
-      console.log('AuthProvider: Cleaning up auth listener');
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   const fetchProfile = async (userId: string) => {
     try {
-      const { data: profileData, error } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
@@ -81,8 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error && error.code !== 'PGRST116') {
         console.error('Error fetching profile:', error);
       } else {
-        console.log('Profile loaded:', profileData);
-        setProfile(profileData);
+        setProfile(data);
       }
     } catch (err) {
       console.error('Profile fetch error:', err);
@@ -91,7 +82,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signInWithGithub = async () => {
     try {
-      console.log('Attempting GitHub sign in...');
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
@@ -100,7 +90,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       if (error) {
-        console.error('GitHub sign in error:', error);
         toast({
           title: "Authentication Error",
           description: error.message,
@@ -108,7 +97,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
       }
     } catch (error: any) {
-      console.error('GitHub sign in catch error:', error);
       toast({
         title: "Authentication Error",
         description: error.message || "Failed to sign in with GitHub",
@@ -119,18 +107,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
-      console.log('Signing out...');
       const { error } = await supabase.auth.signOut();
       if (error) {
         toast({
           title: "Sign Out Error",
           description: error.message,
           variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Signed Out",
-          description: "You have been successfully signed out",
         });
       }
     } catch (error: any) {
