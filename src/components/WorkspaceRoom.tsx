@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import PixelChatBox from "./pixel/PixelChatBox";
@@ -11,38 +11,41 @@ import { useTeams } from "@/hooks/useTeams";
 import { useParams, useNavigate } from "react-router-dom";
 
 export default function WorkspaceRoom() {
-  // Get team id from route parameters
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
+  const { teams, currentTeam, setCurrentTeam, loading: teamsLoading } = useTeams();
+  const [error, setError] = useState<string>("");
 
-  let auth, teams, currentTeam;
-  let errorMsg = "";
+  console.log('WorkspaceRoom render:', { 
+    id, 
+    user: !!user, 
+    authLoading, 
+    teamsLoading, 
+    teamsCount: teams?.length, 
+    currentTeam: currentTeam?.id 
+  });
 
-  // Defensive: Provide friendly error if hooks fail
-  try {
-    auth = useAuth();
-    teams = useTeams();
-    currentTeam = teams.currentTeam;
-
-    // If we are on /workspace/:id, set the current team if different
-    if (id && teams.teams && teams.teams.length > 0) {
-      const thisTeam = teams.teams.find(t => t.id === id);
-      if (thisTeam && (!currentTeam || currentTeam.id !== id)) {
-        teams.setCurrentTeam(thisTeam);
-        // currentTeam will update on next render
-      }
-      // If team not found, error
-      if (!thisTeam) {
-        errorMsg = "This team does not exist or you are not a member.";
+  // Set current team when we have the team ID and teams are loaded
+  useEffect(() => {
+    if (id && teams && teams.length > 0 && !teamsLoading) {
+      const targetTeam = teams.find(t => t.id === id);
+      console.log('Looking for team:', id, 'found:', !!targetTeam);
+      
+      if (targetTeam) {
+        if (!currentTeam || currentTeam.id !== id) {
+          console.log('Setting current team to:', targetTeam.name);
+          setCurrentTeam(targetTeam);
+        }
+      } else {
+        console.log('Team not found, setting error');
+        setError("Team not found or you are not a member.");
       }
     }
-  } catch (e) {
-    errorMsg = (e as Error)?.message || "Critical error loading account or teams.";
-    console.error("WorkspaceRoom errored:", errorMsg, e);
-  }
+  }, [id, teams, teamsLoading, currentTeam, setCurrentTeam]);
 
-  // Loading state - be more permissive
-  if (!errorMsg && (!auth || !teams)) {
+  // Show loading while auth or teams are loading
+  if (authLoading || teamsLoading) {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#e2fde4]">
         <div className="pixel-font text-lg text-[#233f24]">Loading workspace...</div>
@@ -50,23 +53,22 @@ export default function WorkspaceRoom() {
     );
   }
 
-  // Not found or invalid team
-  if (errorMsg) {
+  // Show error if we have one
+  if (error) {
     return (
       <div className="flex flex-col min-h-screen w-full items-center justify-center bg-[#e2fde4]">
         <div className="pixel-font text-red-700 text-lg">
-          {errorMsg}<br />
+          {error}<br />
           <span className="text-xs text-[#ad9271]">
             <button className="underline" onClick={() => navigate("/home")}>Return to dashboard</button>
-            &nbsp;(WorkspaceRoom)
           </span>
         </div>
       </div>
     );
   }
 
-  // If user isn't member of any team, redirect to home
-  if (!teams.teams || teams.teams.length === 0) {
+  // If user has no teams, redirect to home
+  if (!teams || teams.length === 0) {
     return (
       <div className="flex flex-col min-h-screen w-full items-center justify-center bg-[#e2fde4]">
         <div className="pixel-font text-[#ad9271] text-lg">
@@ -80,7 +82,7 @@ export default function WorkspaceRoom() {
   }
 
   // Use current team or fallback to first team
-  const displayTeam = currentTeam || teams.teams[0];
+  const displayTeam = currentTeam || teams[0];
 
   return (
     <div className="relative w-full min-h-screen bg-[#e2fde4] flex flex-row">
@@ -104,7 +106,7 @@ export default function WorkspaceRoom() {
           </div>
           <div className="flex flex-col gap-4 min-w-[320px] w-[340px] relative">
             <PixelTodo />
-            <PixelChatRoom team={displayTeam || undefined as any} />
+            <PixelChatRoom team={displayTeam} />
           </div>
         </div>
       </div>

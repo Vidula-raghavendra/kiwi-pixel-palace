@@ -59,13 +59,14 @@ const Dashboard: React.FC = () => {
     e.preventDefault();
     setErrorMsg("");
     try {
+      console.log('Creating team:', formData.teamName);
       const newTeam = await createTeam(formData.teamName, formData.teamDesc, formData.teamPassword);
+      console.log('Team created successfully:', newTeam);
       closeAll();
-      // Navigate to the new team's workspace
-      setTimeout(() => {
-        navigate(`/workspace/${newTeam.id}`);
-      }, 500);
+      // Navigate to the new team's workspace immediately
+      navigate(`/workspace/${newTeam.id}`);
     } catch (error: any) {
+      console.error('Error creating team:', error);
       setErrorMsg(error?.message || "Error creating team. Please try again.");
     }
   }
@@ -74,13 +75,14 @@ const Dashboard: React.FC = () => {
     e.preventDefault();
     setErrorMsg("");
     try {
+      console.log('Joining team with code:', formData.inviteCode);
       const joinedTeam = await joinTeam(formData.inviteCode, formData.teamJoinPassword);
+      console.log('Team joined successfully:', joinedTeam);
       closeAll();
-      // Navigate to the joined team's workspace
-      setTimeout(() => {
-        navigate(`/workspace/${joinedTeam.id}`);
-      }, 500);
+      // Navigate to the joined team's workspace immediately
+      navigate(`/workspace/${joinedTeam.id}`);
     } catch (error: any) {
+      console.error('Error joining team:', error);
       setErrorMsg(error?.message || "Error joining team. Please try again.");
     }
   }
@@ -90,9 +92,7 @@ const Dashboard: React.FC = () => {
     closeAll();
     // If user has teams, go to current team workspace
     if (currentTeam) {
-      setTimeout(() => {
-        navigate(`/workspace/${currentTeam.id}`);
-      }, 500);
+      navigate(`/workspace/${currentTeam.id}`);
     }
   }
 
