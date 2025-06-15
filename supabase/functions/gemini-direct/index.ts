@@ -1,5 +1,3 @@
-
-// Minimal Edge Function to call Gemini, using secret from Supabase
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -9,8 +7,8 @@ const corsHeaders = {
 };
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-// Updated to v1 and correct model name "gemini-pro"
-const ENDPOINT = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`;
+// Use Gemini 2.0 Flash with v1beta
+const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
 serve(async (req) => {
   // CORS preflight
