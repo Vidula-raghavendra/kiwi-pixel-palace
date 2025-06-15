@@ -122,47 +122,39 @@ export function TeamModals({
         </DialogContent>
       </Dialog>
 
-      {/* Join Team Modal (just a code (and password, if set) field) */}
+      {/* Join Team Modal (just a code field) */}
       <Dialog open={modal.project.open} onOpenChange={closeAll}>
         <DialogContent className="pixel-outline bg-[#fffde8] !rounded-lg shadow-2xl max-w-md z-[100]">
           <DialogHeader>
-            <DialogTitle className="pixel-font text-[#8bb47e]">Join Team</DialogTitle>
+            <DialogTitle className="pixel-font text-[#8bb47e]">Join a Team/Room</DialogTitle>
             <DialogDescription className="pixel-font text-[#7b6449] text-sm">
-              Enter a join code (shared by any member or in workspace) to join a team instantly. Enter password only if required.
+              Enter an invite code below to join a team instantly.
             </DialogDescription>
           </DialogHeader>
           <form className="flex flex-col gap-4 mt-4" onSubmit={submitJoinTeam}>
             <Input
               name="inviteCode"
               required
-              placeholder="Join Code"
+              placeholder="Invite Code"
               value={formData.inviteCode}
               onChange={(e) => setFormData({ inviteCode: e.target.value })}
               className="pixel-outline bg-[#f9fbe3] text-[#233f24]"
               autoFocus
               disabled={loading}
-            />
-            <Input
-              name="teamJoinPassword"
-              type="password"
-              placeholder="Team Password (if required)"
-              value={formData.teamJoinPassword}
-              autoComplete="current-password"
-              onChange={(e) => setFormData({ teamJoinPassword: e.target.value })}
-              className="pixel-outline bg-[#f9fbe3] text-[#233f24]"
-              disabled={loading}
+              data-testid="join-code-input"
             />
             {errorMsg && <div className="text-red-500 text-xs">{errorMsg}</div>}
             <Button
               type="submit"
               disabled={loading}
               className="mt-2 pixel-font bg-[#8bb47e] hover:bg-[#92c993] text-[#233f24] !rounded"
+              data-testid="submit-join-room"
             >
-              {loading ? 'Joining...' : 'Join Team'}
+              {loading ? 'Joining...' : 'Join Room'}
             </Button>
           </form>
           <div className="text-xs text-[#ad9271] pixel-font mt-1">
-            Don't have a code? Ask your teammates to share their join code!
+            Don't have a code? Ask your teammates to share their code!
           </div>
         </DialogContent>
       </Dialog>

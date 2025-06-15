@@ -30,6 +30,34 @@ export default function WorkspacePage() {
   const { createTeam, joinTeam, loading, teams } = useTeams();
   const userName = profile?.full_name || profile?.github_username || 'Kiwi User';
 
+  // Refactored cards for clarity: Join Room & Create Room
+  function renderMainActions() {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-lg mx-auto mb-9">
+        <button
+          className="bg-[#badc5b] hover:bg-[#b6e879] border-2 border-[#ad9271] rounded-lg p-6 text-xl font-bold pixel-font text-[#233f24] shadow-[0_2px_0_#ad9271] transition hover:scale-105"
+          onClick={() => handleCard("project")}
+          data-testid="join-room-btn"
+        >
+          Join a Room
+          <div className="text-base font-normal text-[#7b6449] mt-2">
+            Enter an invite code to join a team instantly
+          </div>
+        </button>
+        <button
+          className="bg-[#8bb47e] hover:bg-[#93c88e] border-2 border-[#ad9271] rounded-lg p-6 text-xl font-bold pixel-font text-[#233f24] shadow-[0_2px_0_#ad9271] transition hover:scale-105"
+          onClick={() => handleCard("team")}
+          data-testid="create-room-btn"
+        >
+          Create a Room
+          <div className="text-base font-normal text-[#7b6449] mt-2">
+            Start a fresh team and get an instant invite link to share
+          </div>
+        </button>
+      </div>
+    );
+  }
+
   function handleCard(card: "project" | "team" | "invite") {
     setErrorMsg("");
     if (card === "invite") {
@@ -83,7 +111,7 @@ export default function WorkspacePage() {
     }
   }
 
-  // If user has teams, show option to go to existing workspace
+  // If user has teams
   if (teams && teams.length > 0) {
     return (
       <SidebarProvider>
@@ -104,7 +132,7 @@ export default function WorkspacePage() {
                         <div className="text-sm text-[#8bb47e]">{team.description}</div>
                       )}
                       <div className="text-xs mt-2">
-                        Share this invite code for teammates to join instantly:&nbsp;
+                        Invite code to join:&nbsp;
                         <span className="bg-[#e2fde4] p-0.5 rounded font-mono">{team.invite_code}</span>
                       </div>
                     </div>
@@ -118,15 +146,7 @@ export default function WorkspacePage() {
                 ))}
               </div>
 
-              <div className="space-y-4">
-                <p className="pixel-font text-[#233f24]">Or create/join a new team:</p>
-                <DashboardCards
-                  openCreate={() => handleCard("team")}
-                  openJoin={() => handleCard("project")} // always open the code modal, not "invite"
-                  openInvite={() => handleCard("project")}
-                  loading={loading}
-                />
-              </div>
+              {renderMainActions()}
             </div>
           </main>
 
@@ -145,7 +165,7 @@ export default function WorkspacePage() {
     );
   }
 
-  // If no teams, show team creation interface
+  // If no teams, default onboarding with join/create room options
   return (
     <SidebarProvider>
       <div className="relative min-h-screen w-full flex flex-col items-center justify-center bg-[#e2fde4] overflow-x-auto">
@@ -155,17 +175,11 @@ export default function WorkspacePage() {
               Welcome, <span className="text-[#8bb47e]">{userName}</span>!
             </div>
             <div className="pixel-font text-[#233f24] mb-8">
-              Get started by creating a new team or joining one with an invite code:
+              Get started by joining an existing team or creating a new one:
             </div>
-            <DashboardCards
-              openCreate={() => handleCard("team")}
-              openJoin={() => handleCard("project")}
-              openInvite={() => handleCard("project")}
-              loading={loading}
-            />
+            {renderMainActions()}
           </div>
         </main>
-
         <TeamModals
           modal={modal}
           closeAll={closeAll}

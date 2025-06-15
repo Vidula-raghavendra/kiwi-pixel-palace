@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { fetchTeamChatSnapshot, fetchTeamTodoSnapshot } from "@/hooks/useTeamSnapshots";
@@ -20,7 +21,7 @@ export default function TeammateScreenModal({
   const [todoSnapshot, setTodoSnapshot] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // NEW: Fetch teammate AI chatbot thread (uses `user_chats` "thread" field)
+  // Fetch teammate AI chatbot thread (from user_chats.thread field)
   const { thread: aiChatThread, loading: aiLoading } = useTeammateAIChat(
     teamId,
     member?.user_id
@@ -70,18 +71,17 @@ export default function TeammateScreenModal({
                 {aiChatThread.messages.map((msg: any, idx: number) => (
                   <li key={idx} className="text-xs mb-1">
                     <span
-                      className={`font-semibold mr-1 ${
-                        msg.role === "user"
-                          ? "text-[#8bb47e]"
-                          : "text-[#ad9271]"
-                      }`}
+                      className={`font-semibold mr-1 ${msg.role === "user"
+                        ? "text-[#8bb47e]"
+                        : "text-[#ad9271]"
+                        }`}
                     >
                       {msg.role === "user"
                         ? member?.profiles?.username || "You"
                         : "AI"}
                       :
                     </span>
-                    <span className="text-[#233f24]">{msg.content}</span>
+                    <span className="text-[#233f24] whitespace-pre-line">{msg.content}</span>
                   </li>
                 ))}
               </ul>
