@@ -246,27 +246,38 @@ export const useTeams = () => {
     try {
       setLoading(true);
 
+      // Use Supabase RPC function to create team and get basic data (team_id, invite_code)
       const { data: teamInserted, error: teamError } = await supabase.rpc("create_team_with_invite", {
         team_name: name, team_description: description
       }).single();
 
       if (teamError || !teamInserted) throw teamError || new Error("Failed to create team");
+
       // Optionally set up password afterwards if relevant
       if (password) {
         const hash = await bcrypt.hash(password, 10);
         await supabase.from("teams").update({ password_hash: hash }).eq("id", teamInserted.team_id);
       }
+
+      // Fetch the full team record so it matches the Team interface
+      const { data: teamFull, error: fetchError } = await supabase
+        .from("teams")
+        .select("*")
+        .eq("id", teamInserted.team_id)
+        .single();
+
+      if (fetchError || !teamFull) throw fetchError || new Error("Failed to fetch complete team info.");
+
       await fetchTeams();
       if (mounted.current) {
-        // forcibly set as current immediately after creation
-        setCurrentTeam({ ...teamInserted, id: teamInserted.team_id });
-        navigateToTeam({ ...teamInserted, id: teamInserted.team_id });
+        setCurrentTeam(teamFull);
+        navigateToTeam(teamFull);
         toast({
           title: "Team Created",
           description: `Share this link to invite: ${window.location.origin}/invite/${teamInserted.invite_code}`,
         });
       }
-      return { ...teamInserted, id: teamInserted.team_id };
+      return teamFull;
     } catch (error: any) {
       if (mounted.current) {
         toast({
@@ -296,6 +307,7 @@ export const useTeams = () => {
 
       if (joinError || !teamId) throw joinError || new Error("Invalid invite link or already a member.");
 
+      // Fetch the full team record immediately so all fields match Team interface
       const { data: team, error: teamFetchErr } = await supabase
         .from("teams")
         .select("*")
