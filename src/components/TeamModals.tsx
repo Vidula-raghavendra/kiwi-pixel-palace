@@ -1,0 +1,96 @@
+
+import React from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+
+export function TeamModals({
+  modal,
+  closeAll,
+  loading,
+  formData,
+  setFormData,
+  submitCreateTeam,
+  submitJoinTeam,
+  errorMsg
+}: {
+  modal: any;
+  closeAll: () => void;
+  loading: boolean;
+  formData: any;
+  setFormData: React.Dispatch<React.SetStateAction<any>>;
+  submitCreateTeam: (e: React.FormEvent) => Promise<void>;
+  submitJoinTeam: (e: React.FormEvent) => Promise<void>;
+  errorMsg: string;
+}) {
+  return (
+    <>
+      {/* Create Team Modal */}
+      <Dialog open={modal.team.open} onOpenChange={closeAll}>
+        <DialogContent className="pixel-outline bg-[#fffde8] !rounded-lg shadow-2xl max-w-md z-[100]">
+          <DialogHeader>
+            <DialogTitle className="pixel-font text-[#8bb47e]">Create New Team</DialogTitle>
+          </DialogHeader>
+          <form className="flex flex-col gap-4 mt-4" onSubmit={submitCreateTeam}>
+            <Input
+              name="name"
+              required
+              placeholder="Team Name"
+              value={formData.teamName}
+              onChange={(e) => setFormData((prev: any) => ({ ...prev, teamName: e.target.value }))}
+              className="pixel-outline bg-[#f9fbe3] text-[#233f24]"
+              autoFocus
+              disabled={loading}
+            />
+            <Textarea
+              name="desc"
+              placeholder="Team Description (optional)"
+              value={formData.teamDesc}
+              onChange={(e) => setFormData((prev: any) => ({ ...prev, teamDesc: e.target.value }))}
+              className="pixel-outline bg-[#f9fbe3] text-[#7b6449]"
+              disabled={loading}
+            />
+            {errorMsg && <div className="text-red-500 text-xs">{errorMsg}</div>}
+            <Button
+              type="submit"
+              disabled={loading}
+              className="mt-2 pixel-font bg-[#8bb47e] hover:bg-[#92c993] text-[#233f24] !rounded"
+            >
+              {loading ? 'Creating...' : 'Create Team'}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Join Team Modal */}
+      <Dialog open={modal.invite.open} onOpenChange={closeAll}>
+        <DialogContent className="pixel-outline bg-[#fffde8] !rounded-lg shadow-2xl max-w-md z-[100]">
+          <DialogHeader>
+            <DialogTitle className="pixel-font text-[#badc5b]">Join Team</DialogTitle>
+          </DialogHeader>
+          <form className="flex flex-col gap-4 mt-4" onSubmit={submitJoinTeam}>
+            <Input
+              name="invite"
+              required
+              placeholder="Enter Invite Code"
+              value={formData.inviteCode}
+              onChange={(e) => setFormData((prev: any) => ({ ...prev, inviteCode: e.target.value }))}
+              className="pixel-outline bg-[#f9fbe3] text-[#233f24]"
+              autoFocus
+              disabled={loading}
+            />
+            {errorMsg && <div className="text-red-500 text-xs">{errorMsg}</div>}
+            <Button
+              type="submit"
+              disabled={loading}
+              className="mt-2 pixel-font bg-[#badc5b] hover:bg-[#d8e893] text-[#233f24] !rounded"
+            >
+              {loading ? 'Joining...' : 'Join Team'}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
