@@ -51,12 +51,11 @@ export const useTeams = () => {
   const [loading, setLoading] = useState(false);
   const supabaseRef = useRef(supabase);
 
-  // Defensive: warn if used outside AuthProvider (user will be undefined)
+  // Defensive: error if used outside AuthProvider (user will be undefined)
   if (typeof window !== "undefined" && user === undefined) {
-    // eslint-disable-next-line no-console
-    console.warn("[useTeams] Error: useTeams() is being used outside an <AuthProvider>. Please ensure your entire app is wrapped in <AuthProvider>.");
-    // Optionally throw or return a stub if you want
-    // throw new Error("useTeams must be used within AuthProvider");
+    throw new Error(
+      "[useTeams] Error: useTeams() must be used inside <AuthProvider>. Make sure your component tree is wrapped in <AuthProvider>."
+    );
   }
 
   useEffect(() => {

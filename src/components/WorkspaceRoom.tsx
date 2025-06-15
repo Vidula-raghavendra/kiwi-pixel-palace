@@ -5,8 +5,30 @@ import PixelChatBox from "./pixel/PixelChatBox";
 import PixelTodo from "./pixel/PixelTodo";
 import PixelChatRoom from "./pixel/PixelChatRoom";
 import WorkspaceSidebar from "./WorkspaceSidebar";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTeams } from "@/hooks/useTeams";
 
 export default function WorkspaceRoom() {
+  // Defensive: check AuthProvider and Team Provider
+  let userOrTeamsOk = true;
+  try {
+    useAuth();
+    useTeams();
+  } catch (e) {
+    userOrTeamsOk = false;
+  }
+
+  if (!userOrTeamsOk) {
+    return (
+      <div className="flex flex-col min-h-screen w-full items-center justify-center bg-[#e2fde4]">
+        <div className="pixel-font text-red-600 text-lg">
+          Account or Team system not loaded.<br/>
+          Please reload or contact support.
+        </div>
+      </div>
+    );
+  }
+
   // Defensive render: Render everything, but show a message if there is no valid team context.
   // We keep the rest of the layout for user experience.
 

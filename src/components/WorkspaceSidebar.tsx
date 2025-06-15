@@ -33,8 +33,42 @@ function SidebarSection({ label, icon, children }: { label: string, icon: React.
 }
 
 export default function WorkspaceSidebar() {
-  const { profile, signOut } = useAuth();
-  const { teams, currentTeam, setCurrentTeam, teamMembers, fetchTeamMembers, loading } = useTeams();
+  // Defensive: check that AuthProvider is mounted
+  let profile, signOut, authLoading;
+  try {
+    const auth = useAuth();
+    profile = auth.profile;
+    signOut = auth.signOut;
+    authLoading = auth.loading;
+  } catch (e) {
+    // AuthProvider isn't mounted
+    return (
+      <aside className="bg-[#fffde8] border-r border-[#badc5b] min-w-[250px] max-w-[270px] flex flex-col justify-center items-center h-screen z-30 shadow-lg">
+        <span className="pixel-font text-red-500 text-sm mt-10">
+          Account system not loaded. Please reload or contact support.
+        </span>
+      </aside>
+    );
+  }
+
+  let teams, currentTeam, setCurrentTeam, teamMembers, fetchTeamMembers, loading;
+  try {
+    const teamHook = useTeams();
+    teams = teamHook.teams;
+    currentTeam = teamHook.currentTeam;
+    setCurrentTeam = teamHook.setCurrentTeam;
+    teamMembers = teamHook.teamMembers;
+    fetchTeamMembers = teamHook.fetchTeamMembers;
+    loading = teamHook.loading;
+  } catch (e) {
+    return (
+      <aside className="bg-[#fffde8] border-r border-[#badc5b] min-w-[250px] max-w-[270px] flex flex-col justify-center items-center h-screen z-30 shadow-lg">
+        <span className="pixel-font text-red-500 text-sm mt-10">
+          Team system not loaded. Please reload or contact support.<br/>{String(e)}
+        </span>
+      </aside>
+    );
+  }
 
   // Invite/Share/Members panel logic
   const teamId = currentTeam?.id;
