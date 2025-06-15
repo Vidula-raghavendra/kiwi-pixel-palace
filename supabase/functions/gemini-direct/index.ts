@@ -1,4 +1,5 @@
 
+// Minimal, robust Gemini Edge Function for Lovable/Supabase
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -8,114 +9,79 @@ const corsHeaders = {
 };
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-const GEMINI_API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-pro:generateContent?key=${GEMINI_API_KEY}`;
 
 serve(async (req) => {
+  // CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Validate key
   if (!GEMINI_API_KEY) {
-    console.error("[Gemini] No GEMINI_API_KEY found.");
     return new Response(
-      JSON.stringify({ error: "Gemini API key is missing from server configuration." }),
-      { status: 500, headers: corsHeaders }
+      JSON.stringify({ error: "GEMINI_API_KEY not configured in Supabase secrets." }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 
-  let prompt;
+  // Parse request
+  let prompt = "";
   try {
     const json = await req.json();
     prompt = json.prompt;
   } catch {
-    return new Response(JSON.stringify({ error: "Malformed JSON payload." }), {
-      status: 400,
-      headers: corsHeaders,
-    });
+    return new Response(
+      JSON.stringify({ error: "Invalid JSON body." }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
-
   if (!prompt) {
     return new Response(
       JSON.stringify({ error: "No prompt provided" }),
-      { status: 400, headers: corsHeaders }
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 
   try {
-    // Log request for debugging
-    console.log("Gemini-direct: sending prompt:", prompt);
+    // Request Gemini
+    const gRes = await fetch(ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+      }),
+    });
 
-    const geminiResponse = await fetch(
-      GEMINI_API_ENDPOINT,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-        }),
-      }
-    );
-
-    const status = geminiResponse.status;
-    const body = await geminiResponse.text();
-    let parsed;
+    const body = await gRes.text();
+    let parsed: any = null;
     try {
       parsed = JSON.parse(body);
-    } catch {
-      parsed = null;
+    } catch {}
+    const result =
+      parsed?.candidates?.[0]?.content?.parts?.[0]?.text ||
+      parsed?.candidates?.[0]?.content?.text ||
+      parsed?.candidates?.[0]?.output ||
+      null;
+
+    if (gRes.ok && result) {
+      return new Response(
+        JSON.stringify({ result }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
-
-    // Log raw Gemini API response for troubleshooting
-    console.log(
-      "Gemini-direct: Gemini API status:",
-      status,
-      "body:",
-      body
-    );
-
-    // Success: try to extract text
-    if (geminiResponse.ok && parsed) {
-      const result =
-        parsed.candidates?.[0]?.content?.parts?.[0]?.text ||
-        parsed.candidates?.[0]?.content?.text ||
-        parsed.candidates?.[0]?.output ||
-        null;
-
-      if (result) {
-        return new Response(JSON.stringify({ result, raw: parsed }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      } else {
-        return new Response(
-          JSON.stringify({
-            error: "No candidate text in Gemini response.",
-            status,
-            raw: parsed,
-          }),
-          { status: 502, headers: corsHeaders }
-        );
-      }
-    }
-
-    // If we have an error, include everything we know
+    // Error response with raw details
     return new Response(
       JSON.stringify({
-        error:
-          parsed?.error?.message || "Gemini API returned error or unknown format.",
-        status,
-        raw: parsed ?? body,
+        error: parsed?.error?.message || "Gemini response missing answer",
+        status: gRes.status,
+        raw: parsed || body,
       }),
-      { status: 502, headers: corsHeaders }
+      { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (err) {
-    console.error("Gemini Direct error:", err);
+  } catch (err: any) {
     return new Response(
-      JSON.stringify({ error: "Gemini API call failed", detail: String(err) }),
-      {
-        status: 500,
-        headers: corsHeaders,
-      }
+      JSON.stringify({ error: String(err) }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
