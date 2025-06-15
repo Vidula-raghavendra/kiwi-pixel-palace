@@ -4,3 +4,5 @@ project_id = "wuetwwdfqellisyxpivr"
 [functions.gemini]
 verify_jwt = false
 
+[functions.gemini-direct]
+verify_jwt = false
