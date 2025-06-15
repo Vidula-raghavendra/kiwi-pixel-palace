@@ -53,6 +53,13 @@ export const useTeams = () => {
   const channelRef = useRef<any>(null);
   const subscriptionActive = useRef(false);
 
+  // Helper for reliable redirect after join/create
+  const navigateToTeam = (team) => {
+    if (team && typeof window !== 'undefined') {
+      window.location.href = `/workspace/${team.id}`;
+    }
+  };
+
   // Channel cleanup
   const cleanupChannel = () => {
     if (channelRef.current) {
@@ -282,6 +289,10 @@ export const useTeams = () => {
       if (memberErr) throw memberErr;
       
       if (mounted.current) {
+        // forcibly set as current immediately after creation
+        setCurrentTeam(teamInserted);
+        navigateToTeam(teamInserted);
+        await fetchTeams();
         toast({
           title: "Team Created",
           description: `Team "${name}" created! Code: ${teamCode}`,
@@ -343,6 +354,10 @@ export const useTeams = () => {
       if (memberErr) throw memberErr;
 
       if (mounted.current) {
+        // forcibly set as current immediately after joining
+        setCurrentTeam(team);
+        navigateToTeam(team);
+        await fetchTeams();
         toast({
           title: "Joined Team",
           description: `You've joined "${team.name}" via code!`,

@@ -27,6 +27,24 @@ export default function WorkspaceRoom() {
     );
   }
 
+  // New: handle impossible/invalid state
+  useEffect(() => {
+    if (!loading && (!teams || teams.length === 0)) {
+      // Immediately redirect if no teams exist
+      navigate("/workspace", { replace: true });
+    }
+    // If loaded and we have an invalid team id, force back to /workspace
+    if (
+      !loading &&
+      id &&
+      teams &&
+      teams.length > 0 &&
+      !teams.find((t) => t.id === id)
+    ) {
+      navigate("/workspace", { replace: true });
+    }
+  }, [id, loading, teams, navigate]);
+
   useEffect(() => {
     if (id && teams && teams.length > 0) {
       const targetTeam = teams.find(t => t.id === id);
