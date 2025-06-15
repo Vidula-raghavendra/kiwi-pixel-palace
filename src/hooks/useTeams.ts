@@ -80,8 +80,8 @@ export const useTeams = () => {
     return () => {
       supabaseRef.current.removeChannel(channel);
     };
-    // eslint-disable-next-line
-  }, [user, currentTeam?.id]);
+    // Fix: Remove currentTeam?.id from deps so only triggers when 'user' changes
+  }, [user]);
 
   // Make sure teams always reflect up-to-date memberships on login
   useEffect(() => {
