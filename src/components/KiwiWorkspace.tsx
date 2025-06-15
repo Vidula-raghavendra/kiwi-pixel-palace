@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import KiwiSidebar from "./KiwiSidebar";
 import KiwiMascot from "./KiwiMascot";
@@ -12,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTeams } from "@/hooks/useTeams";
+import WorkspaceSidebar from "./WorkspaceSidebar";
 
 const modalDefaults = {
   project: { open: false },
@@ -107,6 +107,8 @@ export default function KiwiWorkspace() {
   return (
     <SidebarProvider>
       <div className="relative min-h-screen w-full flex bg-[#e2fde4] overflow-x-auto">
+        {/* NEW SIDEBAR */}
+        <WorkspaceSidebar />
         <KiwiSidebar />
         <KiwiBgAnim />
         <KiwiMascot />
