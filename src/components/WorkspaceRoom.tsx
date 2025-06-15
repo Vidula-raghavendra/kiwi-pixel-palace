@@ -14,7 +14,7 @@ export default function WorkspaceRoom() {
   let auth, teams;
   let errorMsg = "";
 
-  // Validate that we're in "my-room" route specifically!
+  // Defensive logging for debugging
   const location = useLocation();
   const safe = location.pathname === "/workspace/my-room";
   if (!safe) {
@@ -27,9 +27,22 @@ export default function WorkspaceRoom() {
       teams = useTeams();
     } catch (e) {
       errorMsg = (e as Error)?.message || "Critical error loading account or teams.";
+      // Output error to browser console for tracing
+      console.error("WorkspaceRoom errored:", errorMsg, e);
     }
   }
+
+  // Defensive loading fallback: show spinner until all context is ready
+  if (!errorMsg && (!auth || !teams)) {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#e2fde4]">
+        <div className="pixel-font text-lg text-[#233f24]">Loading workspace context...</div>
+      </div>
+    );
+  }
+
   if (errorMsg) {
+    // Show user a friendlier error rather than blank
     return (
       <div className="flex flex-col min-h-screen w-full items-center justify-center bg-[#e2fde4]">
         <div className="pixel-font text-red-700 text-lg">

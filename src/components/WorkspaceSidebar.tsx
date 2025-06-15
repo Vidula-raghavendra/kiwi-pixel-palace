@@ -42,6 +42,7 @@ export default function WorkspaceSidebar() {
     authLoading = auth.loading;
   } catch (e) {
     errorMsg = (e as Error)?.message || "Account context missing.";
+    console.error("WorkspaceSidebar: missing AuthContext!", e);
   }
 
   let teams, currentTeam, setCurrentTeam, teamMembers, fetchTeamMembers, loading;
@@ -56,6 +57,7 @@ export default function WorkspaceSidebar() {
       loading = teamHook.loading;
     } catch (e) {
       errorMsg = (e as Error)?.message || "Team context missing.";
+      console.error("WorkspaceSidebar: missing TeamsContext!", e);
     }
   }
 
