@@ -240,67 +240,33 @@ export const useTeams = () => {
     }
   };
 
+  // Team creation: now returns the invite code/link directly and sets up redirect
   const createTeam = async (name: string, description: string, password?: string) => {
     if (!user) throw new Error("User not authenticated");
-    
     try {
       setLoading(true);
 
-      const teamCode = (
-        Math.random().toString(36).substring(2, 10) + Date.now().toString()
-      )
-        .replace(/[^a-zA-Z0-9]/g, "")
-        .slice(0, 8)
-        .toUpperCase();
-        
-      const inviteCode = (
-        Math.random().toString(36).substring(2, 10) + (Date.now() + 1).toString()
-      )
-        .replace(/[^a-zA-Z0-9]/g, "")
-        .slice(0, 8)
-        .toUpperCase();
+      const { data: teamInserted, error: teamError } = await supabase.rpc("create_team_with_invite", {
+        team_name: name, team_description: description
+      }).single();
 
-      const hash = password ? await bcrypt.hash(password, 10) : null;
-
-      const { data: teamInserted, error: teamError } = await supabase
-        .from("teams")
-        .insert({
-          name,
-          description,
-          team_code: teamCode,
-          invite_code: inviteCode,
-          password_hash: hash,
-          created_by: user.id,
-          creator_id: user.id,
-        })
-        .select()
-        .single();
-        
-      if (teamError) throw teamError;
-
-      const { error: memberErr } = await supabase
-        .from("team_members")
-        .insert({
-          team_id: teamInserted.id,
-          user_id: user.id,
-          role: "admin",
-        });
-        
-      if (memberErr) throw memberErr;
-      
+      if (teamError || !teamInserted) throw teamError || new Error("Failed to create team");
+      // Optionally set up password afterwards if relevant
+      if (password) {
+        const hash = await bcrypt.hash(password, 10);
+        await supabase.from("teams").update({ password_hash: hash }).eq("id", teamInserted.team_id);
+      }
+      await fetchTeams();
       if (mounted.current) {
         // forcibly set as current immediately after creation
-        setCurrentTeam(teamInserted);
-        navigateToTeam(teamInserted);
-        await fetchTeams();
+        setCurrentTeam({ ...teamInserted, id: teamInserted.team_id });
+        navigateToTeam({ ...teamInserted, id: teamInserted.team_id });
         toast({
           title: "Team Created",
-          description: `Team "${name}" created! Code: ${teamCode}`,
+          description: `Share this link to invite: ${window.location.origin}/invite/${teamInserted.invite_code}`,
         });
-        await fetchTeams();
       }
-      
-      return teamInserted;
+      return { ...teamInserted, id: teamInserted.team_id };
     } catch (error: any) {
       if (mounted.current) {
         toast({
@@ -317,55 +283,42 @@ export const useTeams = () => {
     }
   };
 
-  const joinTeam = async (teamCode: string, password: string) => {
+  // New joinTeam - accepts invite code from a link
+  const joinTeam = async (inviteCode: string, password?: string) => {
     if (!user) throw new Error("User not authenticated");
-    
     try {
       setLoading(true);
-      
-      // Try to find a team by team_code or invite_code (both are valid join methods)
-      let { data: team, error: teamError } = await supabase
+
+      // Use Supabase function to join by invite code
+      const { data: teamId, error: joinError } = await supabase.rpc("join_team_by_invite", {
+        code: inviteCode,
+      }).single();
+
+      if (joinError || !teamId) throw joinError || new Error("Invalid invite link or already a member.");
+
+      const { data: team, error: teamFetchErr } = await supabase
         .from("teams")
         .select("*")
-        .or(`team_code.eq.${teamCode},invite_code.eq.${teamCode}`)
-        .maybeSingle();
-        
-      if (teamError || !team) throw new Error("Invalid team code. Please check and try again.");
+        .eq("id", teamId)
+        .single();
+
+      if (teamFetchErr || !team) throw new Error("Couldn't fetch team info after joining.");
 
       // If a password is set, require a correct password.
       if (team.password_hash) {
         const ok = await bcrypt.compare(password, team.password_hash);
         if (!ok) throw new Error("Incorrect password. Please try again.");
       }
-      
-      // Try to add the user as a team member (role: viewer by default)
-      const { error: memberErr } = await supabase
-        .from("team_members")
-        .insert({
-          team_id: team.id,
-          user_id: user.id,
-          role: "viewer",
-        });
-
-      // Already a member or unique constraint? Show friendly error.
-      if (memberErr && memberErr.message.includes("duplicate key value")) {
-        throw new Error("You are already a member of this team.");
-      }
-      if (memberErr) throw memberErr;
 
       if (mounted.current) {
-        // forcibly set as current immediately after joining
         setCurrentTeam(team);
         navigateToTeam(team);
-        await fetchTeams();
         toast({
           title: "Joined Team",
-          description: `You've joined "${team.name}" via code!`,
+          description: `You've joined "${team.name}" via link!`,
         });
         await fetchTeams();
-        setCurrentTeam(team);
       }
-      
       return team;
     } catch (error: any) {
       if (mounted.current) {

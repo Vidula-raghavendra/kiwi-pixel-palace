@@ -11,23 +11,25 @@ export default function MemberChatsModal({
   teamId,
   member,
   onMessageDragStart,
+  neutral,
 }: {
   open: boolean;
   onClose: () => void;
   teamId?: string;
   member: any;
   onMessageDragStart: (message: string) => void;
+  neutral?: boolean;
 }) {
   const { messages, loading } = useTeammateChats(teamId, member?.user_id);
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent
-        className="max-w-lg bg-white rounded-xl border border-gray-200 shadow-lg"
+        className={`max-w-lg rounded-xl border shadow-lg ${neutral ? "bg-[#f7f7f9] border-[#e2e4e8]" : "bg-white"}`}
         style={{
-          background: "#fff",
-          boxShadow: "0 4px 24px 0 rgba(45,48,50,0.06)",
+          boxShadow: "0 4px 24px 0 rgba(44,48,64,0.08)",
           minWidth: 350,
+          backdropFilter: neutral ? undefined : "blur(2px)",
         }}
       >
         <DialogTitle className="font-semibold text-neutral-800 flex items-center gap-3 mb-2">
@@ -60,7 +62,7 @@ export default function MemberChatsModal({
             No chats yet.
           </div>
         ) : (
-          <div className="bg-gray-50 p-2 rounded border border-gray-200 max-h-80 overflow-y-auto">
+          <div className="bg-[#edeff3] p-2 rounded border border-[#e3e4ec] max-h-80 overflow-y-auto">
             <ul className="flex flex-col gap-2 pr-1">
               {messages.map((msg) => (
                 <li
@@ -71,7 +73,7 @@ export default function MemberChatsModal({
                     // trigger local drag logic for highlight/feedback
                     onMessageDragStart(msg.message || "");
                   }}
-                  className="group flex items-center hover:bg-neutral-100 rounded px-2 py-1 transition cursor-grab border border-transparent hover:border-gray-300"
+                  className="group flex items-center hover:bg-neutral-50 rounded px-2 py-1 transition cursor-grab border border-transparent hover:border-[#a2a6b0] "
                   title="Drag to add this message to your chat"
                 >
                   <span className="text-neutral-700 text-sm font-normal flex-1 whitespace-pre-line">

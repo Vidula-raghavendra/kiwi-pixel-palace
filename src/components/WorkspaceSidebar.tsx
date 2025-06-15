@@ -142,7 +142,13 @@ export default function WorkspaceSidebar() {
     }
   }
 
-  // Updated sidebar actions for clarity and functionality
+  const handleCopyInviteLink = () => {
+    if (!currentTeam?.invite_code) return;
+    const url = `${window.location.origin}/invite/${currentTeam.invite_code}`;
+    navigator.clipboard.writeText(url);
+    toast({ title: "Invite link copied!", description: url });
+  };
+
   const sidebarActions = [
     {
       key: "invite",
@@ -264,6 +270,16 @@ export default function WorkspaceSidebar() {
           </DialogContent>
         </Dialog>
 
+        {/* New: Copy invite link directly */}
+        {currentTeam && (
+          <Button
+            className="w-full pixel-font bg-[#92ad97] hover:bg-[#b6c9b3] text-[#233f24] mb-3"
+            onClick={handleCopyInviteLink}
+          >
+            Copy Invite Link
+          </Button>
+        )}
+
         {/* ----------- TEAM ACTION MODALS ----------- */}
         {currentTeam && (
           <>
@@ -290,6 +306,7 @@ export default function WorkspaceSidebar() {
             teamId={currentTeam?.id}
             member={activeMember}
             onMessageDragStart={(msg: string) => setDraggedMsg(msg)}
+            neutral // passed down for style update
           />
         )}
       </div>

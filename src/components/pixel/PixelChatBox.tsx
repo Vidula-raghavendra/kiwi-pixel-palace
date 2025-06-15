@@ -9,7 +9,7 @@ type ChatMessage = {
   text: string;
 };
 
-export default function PixelChatBox({ taller = false }: { taller?: boolean }) {
+export default function PixelChatBox({ taller = false, draggedMsg }: { taller?: boolean; draggedMsg?: string | null }) {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([
     { sender: "ai", text: "Hello! Ask me anything ✨" },
@@ -115,6 +115,13 @@ export default function PixelChatBox({ taller = false }: { taller?: boolean }) {
     e.preventDefault();
     setDragOver(false);
   }
+
+  // If a message is set for being dropped (from the sidebar), prefill input
+  useEffect(() => {
+    if (draggedMsg) {
+      setInput(draggedMsg);
+    }
+  }, [draggedMsg]);
 
   return (
     <section
