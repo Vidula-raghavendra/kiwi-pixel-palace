@@ -8,47 +8,71 @@ import PixelChatRoom from "./pixel/PixelChatRoom";
 import WorkspaceSidebar from "./WorkspaceSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTeams } from "@/hooks/useTeams";
-import { useLocation } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 export default function WorkspaceRoom() {
-  let auth, teams;
+  // Get team id from route parameters
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  let auth, teams, currentTeam;
   let errorMsg = "";
 
-  // Defensive logging for debugging
-  const location = useLocation();
-  const safe = location.pathname === "/workspace/my-room";
-  if (!safe) {
-    errorMsg = "This workspace route is not supported. Please use /workspace/my-room.";
-  }
+  // Defensive: Provide friendly error if hooks fail
+  try {
+    auth = useAuth();
+    teams = useTeams();
+    currentTeam = teams.currentTeam;
 
-  if (!errorMsg) {
-    try {
-      auth = useAuth();
-      teams = useTeams();
-    } catch (e) {
-      errorMsg = (e as Error)?.message || "Critical error loading account or teams.";
-      // Output error to browser console for tracing
-      console.error("WorkspaceRoom errored:", errorMsg, e);
+    // If we are on /workspace/:id, set the current team if different
+    if (id && teams.teams && teams.teams.length > 0) {
+      const thisTeam = teams.teams.find(t => t.id === id);
+      if (thisTeam && (!currentTeam || currentTeam.id !== id)) {
+        teams.setCurrentTeam(thisTeam);
+        // currentTeam will update on next render
+      }
+      // If team not found, error
+      if (!thisTeam) {
+        errorMsg = "This team does not exist or you are not a member.";
+      }
     }
+  } catch (e) {
+    errorMsg = (e as Error)?.message || "Critical error loading account or teams.";
+    console.error("WorkspaceRoom errored:", errorMsg, e);
   }
 
-  // Defensive loading fallback: show spinner until all context is ready
-  if (!errorMsg && (!auth || !teams)) {
+  // Loading state
+  if (!errorMsg && (!auth || !teams || teams.loading)) {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#e2fde4]">
-        <div className="pixel-font text-lg text-[#233f24]">Loading workspace context...</div>
+        <div className="pixel-font text-lg text-[#233f24]">Loading workspace...</div>
       </div>
     );
   }
 
+  // Not found or invalid team
   if (errorMsg) {
-    // Show user a friendlier error rather than blank
     return (
       <div className="flex flex-col min-h-screen w-full items-center justify-center bg-[#e2fde4]">
         <div className="pixel-font text-red-700 text-lg">
           {errorMsg}<br />
           <span className="text-xs text-[#ad9271]">
-            Please reload or <a className="underline" href="/home">go home</a>. (WorkspaceRoom)
+            <button className="underline" onClick={() => navigate("/home")}>Return to dashboard</button>
+            &nbsp;(WorkspaceRoom)
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // If user isn't member of any team, edge case
+  if (!teams.teams || teams.teams.length === 0) {
+    return (
+      <div className="flex flex-col min-h-screen w-full items-center justify-center bg-[#e2fde4]">
+        <div className="pixel-font text-[#ad9271] text-lg">
+          You are not part of any team yet.<br />
+          <span className="text-xs text-[#ad9271]">
+            <button className="underline" onClick={() => navigate("/home")}>Create or join a team</button>
           </span>
         </div>
       </div>
@@ -79,7 +103,7 @@ export default function WorkspaceRoom() {
           </div>
           <div className="flex flex-col gap-4 min-w-[320px] w-[340px] relative">
             <PixelTodo />
-            <PixelChatRoom team={undefined as any} />
+            <PixelChatRoom team={currentTeam || undefined as any} />
           </div>
         </div>
       </div>
