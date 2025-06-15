@@ -1,9 +1,9 @@
-
 import React, { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { fetchTeamChatSnapshot, fetchTeamTodoSnapshot } from "@/hooks/useTeamSnapshots";
 import { User } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTeammateAIChat } from "@/hooks/useTeammateAIChat";
 
 export default function TeammateScreenModal({
   open,
@@ -19,6 +19,9 @@ export default function TeammateScreenModal({
   const [chatSnapshot, setChatSnapshot] = useState<any>(null);
   const [todoSnapshot, setTodoSnapshot] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  // NEW: Fetch teammate AI chatbot thread
+  const { thread: aiChatThread, loading: aiLoading } = useTeammateAIChat(teamId, member?.user_id);
 
   useEffect(() => {
     if (!open || !teamId || !member?.user_id) return;
@@ -51,6 +54,31 @@ export default function TeammateScreenModal({
               "Teammate"}
           </span>
         </DialogTitle>
+        {/* New Section: AI chatbot thread */}
+        <div className="mb-4">
+          <div className="font-medium text-green-800 mb-1 text-sm">
+            <span>AI Chatbot (Private, Live View)</span>
+          </div>
+          <div className="bg-[#fffde8] rounded-lg border border-[#badc5b] p-2 min-h-[80px] shadow-inner max-h-56 overflow-y-auto">
+            {aiLoading ? (
+              <span className="text-xs text-gray-400">Loading AI chat...</span>
+            ) : aiChatThread && Array.isArray(aiChatThread.messages) && aiChatThread.messages.length > 0 ? (
+              <ul className="flex flex-col gap-1">
+                {aiChatThread.messages.map((msg: any, idx: number) => (
+                  <li key={idx} className="text-xs mb-1">
+                    <span className={`font-semibold mr-1 ${msg.role === "user" ? "text-[#8bb47e]" : "text-[#ad9271]"}`}>
+                      {msg.role === "user" ? member?.profiles?.username || "You" : "AI"}:
+                    </span>
+                    <span className="text-[#233f24]">{msg.content}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="text-xs text-neutral-400">No AI chat history found.</div>
+            )}
+          </div>
+        </div>
+        {/* ...keep rest of the modal: live chat + todos ... */}
         <div className="font-medium text-[#8bb47e] mb-2 px-1">
           <span>Live screen preview</span>
         </div>

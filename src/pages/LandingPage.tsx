@@ -1,4 +1,3 @@
-
 import React from "react";
 import PixelMascot from "../components/PixelMascot";
 import Pixel3DButton from "../components/Pixel3DButton";
@@ -6,12 +5,20 @@ import AboutSection from "../components/AboutSection";
 import FeaturesSection from "../components/FeaturesSection";
 import FooterSection from "../components/FooterSection";
 import { useNavigate } from "react-router-dom";
+import StoryblokBlock from "../components/StoryblokBlock"; // NEW
 
 export default function LandingPage() {
   const navigate = useNavigate();
 
   return (
     <main className="min-h-screen flex flex-col items-center bg-gradient-to-br from-[#e2fde4] to-[#fff7ea]">
+      {/* Storyblok content: simple block with your API key and slug */}
+      <div className="w-full max-w-xl mx-auto mt-4">
+        <StoryblokBlock
+          apiKey="" // <-- Set your PUBLIC API KEY here for demo, or pass as prop
+          storySlug="welcome"
+        />
+      </div>
       {/* Pixel stars animated BG */}
       <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
         {/* Dots as pixel stars */}
