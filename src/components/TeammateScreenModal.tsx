@@ -20,8 +20,11 @@ export default function TeammateScreenModal({
   const [todoSnapshot, setTodoSnapshot] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // NEW: Fetch teammate AI chatbot thread
-  const { thread: aiChatThread, loading: aiLoading } = useTeammateAIChat(teamId, member?.user_id);
+  // NEW: Fetch teammate AI chatbot thread (uses `user_chats` "thread" field)
+  const { thread: aiChatThread, loading: aiLoading } = useTeammateAIChat(
+    teamId,
+    member?.user_id
+  );
 
   useEffect(() => {
     if (!open || !teamId || !member?.user_id) return;
@@ -54,7 +57,7 @@ export default function TeammateScreenModal({
               "Teammate"}
           </span>
         </DialogTitle>
-        {/* New Section: AI chatbot thread */}
+        {/* AI chatbot thread section */}
         <div className="mb-4">
           <div className="font-medium text-green-800 mb-1 text-sm">
             <span>AI Chatbot (Private, Live View)</span>
@@ -66,15 +69,26 @@ export default function TeammateScreenModal({
               <ul className="flex flex-col gap-1">
                 {aiChatThread.messages.map((msg: any, idx: number) => (
                   <li key={idx} className="text-xs mb-1">
-                    <span className={`font-semibold mr-1 ${msg.role === "user" ? "text-[#8bb47e]" : "text-[#ad9271]"}`}>
-                      {msg.role === "user" ? member?.profiles?.username || "You" : "AI"}:
+                    <span
+                      className={`font-semibold mr-1 ${
+                        msg.role === "user"
+                          ? "text-[#8bb47e]"
+                          : "text-[#ad9271]"
+                      }`}
+                    >
+                      {msg.role === "user"
+                        ? member?.profiles?.username || "You"
+                        : "AI"}
+                      :
                     </span>
                     <span className="text-[#233f24]">{msg.content}</span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <div className="text-xs text-neutral-400">No AI chat history found.</div>
+              <div className="text-xs text-neutral-400">
+                No AI chat history found.
+              </div>
             )}
           </div>
         </div>

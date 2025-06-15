@@ -11,12 +11,25 @@ import { Link } from "react-router-dom";
 const statCard =
   "flex flex-col items-center justify-center bg-[#fffdf3] border-2 border-[#ad9271] rounded-lg shadow-[0_2px_0_#ad9271] px-6 py-4 min-w-[120px] min-h-[88px] pixel-font font-semibold text-lg text-[#233f24]";
 
-/** Invite Modal shown immediately after creating a new team/project */
-function InviteModal({ open, onClose, inviteCode }: { open: boolean, onClose: () => void, inviteCode: string }) {
+/** Invite Modal shown after creating a new team/project */
+function InviteModal({
+  open,
+  onClose,
+  inviteCode,
+}: {
+  open: boolean;
+  onClose: () => void;
+  inviteCode: string;
+}) {
+  // Ensure copied link resets when modal closes
   const [copied, setCopied] = React.useState(false);
-  const link = inviteCode
-    ? `${window.location.origin}/invite/${inviteCode}`
-    : "";
+  React.useEffect(() => {
+    if (!open) setCopied(false);
+  }, [open]);
+  const link =
+    inviteCode && inviteCode.length > 0
+      ? `${window.location.origin}/invite/${inviteCode}`
+      : "";
 
   function handleCopy() {
     if (link) {
@@ -26,7 +39,7 @@ function InviteModal({ open, onClose, inviteCode }: { open: boolean, onClose: ()
     }
   }
   return (
-    <Dialog open={open} onOpenChange={open => !open ? onClose() : undefined}>
+    <Dialog open={open} onOpenChange={o => !o ? onClose() : undefined}>
       <DialogContent>
         <DialogTitle className="pixel-font text-[#233f24]">
           Share Your Team Invite Link
@@ -36,7 +49,12 @@ function InviteModal({ open, onClose, inviteCode }: { open: boolean, onClose: ()
             Send this link to teammates to let them join your workspace:
           </div>
           <div className="flex items-center gap-2">
-            <Input className="pixel-font text-sm" value={link} readOnly />
+            <Input
+              className="pixel-font text-sm"
+              value={link}
+              readOnly
+              onFocus={e => e.target.select()}
+            />
             <Button
               className="bg-[#dbe186] hover:bg-[#badc5b] text-[#233f24] rounded"
               onClick={handleCopy}
@@ -47,7 +65,10 @@ function InviteModal({ open, onClose, inviteCode }: { open: boolean, onClose: ()
             </Button>
           </div>
         </div>
-        <Button onClick={onClose} className="w-full pixel-font mt-4 bg-[#badc5b] text-[#233f24]">
+        <Button
+          onClick={onClose}
+          className="w-full pixel-font mt-4 bg-[#badc5b] text-[#233f24]"
+        >
           Done
         </Button>
       </DialogContent>
@@ -62,6 +83,7 @@ const Dashboard: React.FC = () => {
   // CRITICAL: All hooks must be called at the top level - NEVER conditionally
   const { createTeam, joinTeam, loading, teams, currentTeam } = useTeams();
   
+  // Only one InviteModal rendered (moved out the duplicate at bottom!)
   const [modalOpen, setModalOpen] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
   const [creating, setCreating] = useState(false);
@@ -84,14 +106,15 @@ const Dashboard: React.FC = () => {
     e.preventDefault();
     setErrorMsg("");
     setCreating(true);
+    setInviteCode(""); // Reset invite code in case of multiple attempts
     try {
       const team = await createTeam(teamName, teamDesc);
-      // This step ensures the invite code is always set from the complete returned team object:
-      setInviteCode(team.invite_code);
+      // Robustly set invite code from a returned correct team object
+      setInviteCode(team.invite_code || "");
       setModalOpen(true);
       setTeamName("");
       setTeamDesc("");
-      // Do NOT automatically navigate; let the user choose after copying the link
+      // Don't navigate, just show modal
     } catch (err: any) {
       setErrorMsg(err?.message || "Error creating team.");
     } finally {
@@ -198,7 +221,7 @@ const Dashboard: React.FC = () => {
             {creating ? "Creating..." : "Create Team"}
           </Button>
         </form>
-        {/* Show invite link modal (see below) */}
+        {/* Only one InviteModal here, shown when creating a team */}
         <InviteModal
           open={modalOpen}
           onClose={() => setModalOpen(false)}
@@ -232,13 +255,6 @@ const Dashboard: React.FC = () => {
           </Link>
         </Button>
       </div>
-
-      {/* Invite Modal */}
-      <InviteModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        inviteCode={inviteCode}
-      />
     </div>
   );
 };
