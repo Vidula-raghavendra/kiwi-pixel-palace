@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -26,6 +25,19 @@ const DashboardPage = () => {
 const WorkspacePage = () => <KiwiWorkspace />;
 const WorkspaceRoomPage = () => <WorkspaceRoom />;
 
+function NotFoundOrInvalidWorkspace() {
+  return (
+    <div className="min-h-screen flex flex-col justify-center items-center bg-[#e2fde4]">
+      <div className="pixel-font text-red-700 text-lg">
+        Invalid workspace route or context.<br />
+        <span className="text-xs text-[#ad9271]">
+          Try reloading or return to <a href="/home" className="underline">dashboard</a>.
+        </span>
+      </div>
+    </div>
+  );
+}
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -45,16 +57,19 @@ const App = () => (
                 <DashboardPage />
               </ProtectedRoute>
             } />
-            <Route path="/workspace/:id" element={
-              <ProtectedRoute>
-                <WorkspacePage />
-              </ProtectedRoute>
-            } />
             <Route path="/workspace/my-room" element={
               <ProtectedRoute>
                 <WorkspaceRoomPage />
               </ProtectedRoute>
             } />
+            {/* Accept numeric/alphanumeric workspace IDs only */}
+            <Route path="/workspace/:id" element={
+              <ProtectedRoute>
+                <WorkspacePage />
+              </ProtectedRoute>
+            } />
+            {/* Fallback for any other unknown or malformed workspace route */}
+            <Route path="/workspace/*" element={<NotFoundOrInvalidWorkspace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

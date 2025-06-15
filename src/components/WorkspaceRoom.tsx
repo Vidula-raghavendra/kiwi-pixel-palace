@@ -8,24 +8,35 @@ import PixelChatRoom from "./pixel/PixelChatRoom";
 import WorkspaceSidebar from "./WorkspaceSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTeams } from "@/hooks/useTeams";
+import { useLocation } from "react-router-dom";
 
 export default function WorkspaceRoom() {
   let auth, teams;
   let errorMsg = "";
-  try {
-    auth = useAuth();
-    teams = useTeams();
-  } catch (e) {
-    errorMsg = (e as Error)?.message || "Critical error loading account or teams.";
+
+  // Validate that we're in "my-room" route specifically!
+  const location = useLocation();
+  const safe = location.pathname === "/workspace/my-room";
+  if (!safe) {
+    errorMsg = "This workspace route is not supported. Please use /workspace/my-room.";
   }
 
-  // Catch *ALL* errors, show user-friendly fallback, never a blank screen.
+  if (!errorMsg) {
+    try {
+      auth = useAuth();
+      teams = useTeams();
+    } catch (e) {
+      errorMsg = (e as Error)?.message || "Critical error loading account or teams.";
+    }
+  }
   if (errorMsg) {
     return (
       <div className="flex flex-col min-h-screen w-full items-center justify-center bg-[#e2fde4]">
-        <div className="pixel-font text-red-600 text-lg">
+        <div className="pixel-font text-red-700 text-lg">
           {errorMsg}<br />
-          <span className="text-xs text-[#ad9271]">Please reload or contact support. (WorkspaceRoom)</span>
+          <span className="text-xs text-[#ad9271]">
+            Please reload or <a className="underline" href="/home">go home</a>. (WorkspaceRoom)
+          </span>
         </div>
       </div>
     );
@@ -33,12 +44,8 @@ export default function WorkspaceRoom() {
 
   return (
     <div className="relative w-full min-h-screen bg-[#e2fde4] flex flex-row">
-      {/* Left: Workspace Sidebar */}
       <WorkspaceSidebar />
-
-      {/* Center/right: main content */}
       <div className="flex-1 flex flex-col items-center justify-start py-5 px-2">
-        {/* Top Dashboard Bar WITHOUT Team Dropdown */}
         <div className="w-full max-w-4xl flex flex-row items-start justify-end mb-3">
           <Button
             variant="secondary"
@@ -51,20 +58,14 @@ export default function WorkspaceRoom() {
             </a>
           </Button>
         </div>
-        {/* Main grid layout */}
         <div className="w-full max-w-5xl flex-1 flex flex-col md:flex-row gap-6 items-start justify-center">
-          {/* Center: Chatbot */}
           <div className="flex-1 min-w-[320px] flex items-center justify-center">
             <div className="w-full flex justify-center">
               <PixelChatBox taller />
             </div>
           </div>
-          {/* Right column */}
           <div className="flex flex-col gap-4 min-w-[320px] w-[340px] relative">
-            {/* Top-right: To Do */}
             <PixelTodo />
-            {/* Bottom-right: Team Chatroom */}
-            {/* Render placeholder if currentTeam is undefined */}
             <PixelChatRoom team={undefined as any} />
           </div>
         </div>
