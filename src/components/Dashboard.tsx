@@ -86,6 +86,7 @@ const Dashboard: React.FC = () => {
     setCreating(true);
     try {
       const team = await createTeam(teamName, teamDesc);
+      // This step ensures the invite code is always set from the complete returned team object:
       setInviteCode(team.invite_code);
       setModalOpen(true);
       setTeamName("");
