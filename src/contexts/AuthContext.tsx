@@ -34,6 +34,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     console.log('AuthProvider: Setting up auth state listener');
     
+    // Get initial session immediately
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session?.user?.id);
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+      
+      // Fetch profile in background if user exists
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      }
+    });
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -42,23 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
         
         if (session?.user && event !== 'SIGNED_OUT') {
-          // Fetch user profile after authentication
-          try {
-            const { data: profileData, error } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
-              
-            if (error && error.code !== 'PGRST116') {
-              console.error('Error fetching profile:', error);
-            } else {
-              console.log('Profile loaded:', profileData);
-              setProfile(profileData);
-            }
-          } catch (err) {
-            console.error('Profile fetch error:', err);
-          }
+          fetchProfile(session.user.id);
         } else if (event === 'SIGNED_OUT') {
           setProfile(null);
         }
@@ -67,22 +64,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session check:', session?.user?.id);
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (!session) {
-        setLoading(false);
-      }
-    });
-
     return () => {
       console.log('AuthProvider: Cleaning up auth listener');
       subscription.unsubscribe();
     };
   }, []);
+
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data: profileData, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+        
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching profile:', error);
+      } else {
+        console.log('Profile loaded:', profileData);
+        setProfile(profileData);
+      }
+    } catch (err) {
+      console.error('Profile fetch error:', err);
+    }
+  };
 
   const signInWithGithub = async () => {
     try {

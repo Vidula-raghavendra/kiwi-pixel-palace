@@ -17,7 +17,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     pathname: location.pathname 
   });
 
-  // If auth is still loading, render a loader
+  // If auth is still loading, show minimal loader
   if (loading) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-[#e2fde4]">

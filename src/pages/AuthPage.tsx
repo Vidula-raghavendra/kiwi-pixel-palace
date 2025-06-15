@@ -10,7 +10,7 @@ export default function AuthPage() {
   const { user, loading, signInWithGithub } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect authenticated users to home
+  // Redirect authenticated users to home immediately
   useEffect(() => {
     if (user && !loading) {
       console.log('AuthPage: User is authenticated, redirecting to home');
@@ -20,6 +20,7 @@ export default function AuthPage() {
 
   console.log('AuthPage render:', { user: !!user, loading });
 
+  // Show loading only for a brief moment
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#e2fde4]">
@@ -28,9 +29,9 @@ export default function AuthPage() {
     );
   }
 
+  // If user exists, don't show auth form (redirect will happen)
   if (user) {
-    console.log('AuthPage: User exists, should redirect');
-    return null; // Let the useEffect handle the redirect
+    return null;
   }
 
   return (
