@@ -143,7 +143,7 @@ export default function KiwiWorkspace() {
 
         {/* Create Team Modal */}
         <Dialog open={modal.team.open} onOpenChange={closeAll}>
-          <DialogContent className="pixel-outline bg-[#fffde8] !rounded-lg shadow-2xl max-w-md">
+          <DialogContent className="pixel-outline bg-[#fffde8] !rounded-lg shadow-2xl max-w-md z-[100]">
             <DialogHeader>
               <DialogTitle className="pixel-font text-[#8bb47e]">Create New Team</DialogTitle>
             </DialogHeader>
@@ -155,6 +155,8 @@ export default function KiwiWorkspace() {
                 value={formData.teamName}
                 onChange={(e) => setFormData(prev => ({...prev, teamName: e.target.value}))}
                 className="pixel-outline bg-[#f9fbe3] text-[#233f24]" 
+                autoFocus
+                disabled={loading === true ? true : false}
               />
               <Textarea 
                 name="desc" 
@@ -162,6 +164,7 @@ export default function KiwiWorkspace() {
                 value={formData.teamDesc}
                 onChange={(e) => setFormData(prev => ({...prev, teamDesc: e.target.value}))}
                 className="pixel-outline bg-[#f9fbe3] text-[#7b6449]" 
+                disabled={loading === true ? true : false}
               />
               <Button 
                 type="submit" 
@@ -176,7 +179,7 @@ export default function KiwiWorkspace() {
 
         {/* Join Team Modal */}
         <Dialog open={modal.invite.open} onOpenChange={closeAll}>
-          <DialogContent className="pixel-outline bg-[#fffde8] !rounded-lg shadow-2xl max-w-md">
+          <DialogContent className="pixel-outline bg-[#fffde8] !rounded-lg shadow-2xl max-w-md z-[100]">
             <DialogHeader>
               <DialogTitle className="pixel-font text-[#badc5b]">Join Team</DialogTitle>
             </DialogHeader>
@@ -188,6 +191,8 @@ export default function KiwiWorkspace() {
                 value={formData.inviteCode}
                 onChange={(e) => setFormData(prev => ({...prev, inviteCode: e.target.value}))}
                 className="pixel-outline bg-[#f9fbe3] text-[#233f24]" 
+                autoFocus
+                disabled={loading === true ? true : false}
               />
               <Button 
                 type="submit" 
