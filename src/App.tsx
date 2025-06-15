@@ -1,4 +1,5 @@
 
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,20 +9,45 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import LandingPage from "./pages/LandingPage";
 import Dashboard from "./components/Dashboard";
-import React from "react";
 import WorkspacePage from "./pages/WorkspacePage";
 import WorkspaceRoom from "./components/WorkspaceRoom";
 import AuthPage from "./pages/AuthPage";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-const DashboardPage = () => {
-  return (
-    <div className="min-h-screen w-full bg-[#e2fde4] flex items-center justify-center">
-      <Dashboard />
-    </div>
-  );
-};
+function ErrorBoundary({ children }: { children: React.ReactNode }) {
+  const [err, setErr] = React.useState<Error | null>(null);
+  React.useEffect(() => {
+    const handler = (e: any) => {
+      setErr(e?.error || e || new Error("Unknown error"));
+      console.error("Global ErrorBoundary caught:", e);
+    };
+    window.addEventListener("error", handler);
+    window.addEventListener("unhandledrejection", handler);
+    return () => {
+      window.removeEventListener("error", handler);
+      window.removeEventListener("unhandledrejection", handler);
+    };
+  }, []);
+  if (err) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#e2fde4]">
+        <div className="pixel-font text-red-700">
+          App error: {err.message}
+          <br />
+          Try reloading or <a href="/auth" className="underline">log in again</a>.
+        </div>
+      </div>
+    );
+  }
+  return <>{children}</>;
+}
+
+const DashboardPage = () => (
+  <div className="min-h-screen w-full bg-[#e2fde4] flex items-center justify-center">
+    <Dashboard />
+  </div>
+);
 
 function NotFoundOrInvalidWorkspace() {
   return (
@@ -51,33 +77,33 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/auth" element={<AuthPage />} />
-            <Route path="/login" element={<AuthPage />} />
-            <Route path="/signup" element={<AuthPage />} />
-            <Route path="/home" element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/workspace" element={
-              <ProtectedRoute>
-                <WorkspacePage />
-              </ProtectedRoute>
-            } />
-            {/* Dynamic workspace routes for team IDs */}
-            <Route path="/workspace/:id" element={
-              <ProtectedRoute>
-                <WorkspaceRoom />
-              </ProtectedRoute>
-            } />
-            {/* Fallback for any other unknown workspace route */}
-            <Route path="/workspace/*" element={<NotFoundOrInvalidWorkspace />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+        <ErrorBoundary>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/auth" element={<AuthPage />} />
+              <Route path="/login" element={<AuthPage />} />
+              <Route path="/signup" element={<AuthPage />} />
+              <Route path="/home" element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/workspace" element={
+                <ProtectedRoute>
+                  <WorkspacePage />
+                </ProtectedRoute>
+              } />
+              <Route path="/workspace/:id" element={
+                <ProtectedRoute>
+                  <WorkspaceRoom />
+                </ProtectedRoute>
+              } />
+              <Route path="/workspace/*" element={<NotFoundOrInvalidWorkspace />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </ErrorBoundary>
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
