@@ -23,6 +23,7 @@ import { User as UserIcon } from "lucide-react";
 import { Plus, Users, Share2 } from "lucide-react";
 import ViewWorkspaceSnapshotModal from "@/components/ViewWorkspaceSnapshotModal";
 import MemberChatsModal from "./MemberChatsModal"; // new
+import TeammateScreenModal from "./TeammateScreenModal"; // NEW
 
 // New: show profile presence modal state
 type Member = any;
@@ -69,6 +70,7 @@ export default function WorkspaceSidebar() {
   const [showMemberChats, setShowMemberChats] = React.useState(false);
   const [draggedMsg, setDraggedMsg] = React.useState<string | null>(null);
   const [activeMember, setActiveMember] = React.useState<any>(null);
+  const [showTeammateModal, setShowTeammateModal] = React.useState(false); // NEW
 
   // ---- NEW MODAL LOGIC ----
   const [showInvite, setShowInvite] = React.useState(false);
@@ -168,6 +170,7 @@ export default function WorkspaceSidebar() {
     },
   ];
 
+  // update sidebar to use modal
   return (
     <SidebarProvider>
       <div className="w-64 flex flex-col h-screen bg-[#fafbfc] border-r border-[#ececec]">
@@ -183,10 +186,8 @@ export default function WorkspaceSidebar() {
                 type="button"
                 className="flex items-center space-x-2 py-2 hover:bg-neutral-100 rounded w-full mb-1 transition text-left"
                 onClick={() => {
-                  setActiveMember({
-                    ...member,
-                  });
-                  setShowMemberChats(true);
+                  setActiveMember({ ...member });
+                  setShowTeammateModal(true); // SHOW screen modal, not the chat modal
                 }}
                 style={{
                   border: "none",
@@ -310,6 +311,16 @@ export default function WorkspaceSidebar() {
           />
         )}
       </div>
+
+      {/* Place the screen modal at the top level for portals */}
+      {activeMember && (
+        <TeammateScreenModal
+          open={showTeammateModal}
+          onClose={() => setShowTeammateModal(false)}
+          teamId={currentTeam?.id}
+          member={activeMember}
+        />
+      )}
     </SidebarProvider>
   );
 }

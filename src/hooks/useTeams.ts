@@ -294,8 +294,8 @@ export const useTeams = () => {
     }
   };
 
-  // New joinTeam - accepts invite code from a link
-  const joinTeam = async (inviteCode: string, password?: string) => {
+  // New joinTeam - accepts invite code from a link, no password or email needed, just link
+  const joinTeam = async (inviteCode: string) => {
     if (!user) throw new Error("User not authenticated");
     try {
       setLoading(true);
@@ -315,12 +315,6 @@ export const useTeams = () => {
         .single();
 
       if (teamFetchErr || !team) throw new Error("Couldn't fetch team info after joining.");
-
-      // If a password is set, require a correct password.
-      if (team.password_hash) {
-        const ok = await bcrypt.compare(password, team.password_hash);
-        if (!ok) throw new Error("Incorrect password. Please try again.");
-      }
 
       if (mounted.current) {
         setCurrentTeam(team);

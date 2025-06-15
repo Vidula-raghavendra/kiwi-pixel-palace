@@ -90,10 +90,7 @@ const Dashboard: React.FC = () => {
       setModalOpen(true);
       setTeamName("");
       setTeamDesc("");
-      // Navigate to workspace after team creation and copy prompt
-      setTimeout(() => {
-        navigate(`/workspace/${team.id}`);
-      }, 1200);
+      // Do NOT automatically navigate; let the user choose after copying the link
     } catch (err: any) {
       setErrorMsg(err?.message || "Error creating team.");
     } finally {
@@ -200,6 +197,12 @@ const Dashboard: React.FC = () => {
             {creating ? "Creating..." : "Create Team"}
           </Button>
         </form>
+        {/* Show invite link modal (see below) */}
+        <InviteModal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          inviteCode={inviteCode}
+        />
       </div>
       
       <div className="mt-6 pixel-font text-[#8bb47e] text-center">
