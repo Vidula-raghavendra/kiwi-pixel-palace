@@ -82,7 +82,7 @@ export function TeamModals({
           <DialogHeader>
             <DialogTitle className="pixel-font text-[#badc5b]">Join Team</DialogTitle>
             <DialogDescription className="pixel-font text-[#7b6449] text-sm">
-              Enter a team code to join an existing team.
+              Enter a team code (shared by any member or in workspace sidebar) to join a team instantly. A password is only required if set for that team.
             </DialogDescription>
           </DialogHeader>
           <form className="flex flex-col gap-4 mt-4" onSubmit={submitJoinTeam}>
@@ -99,7 +99,7 @@ export function TeamModals({
             <Input
               name="teamJoinPassword"
               type="password"
-              placeholder="Team Password"
+              placeholder="Team Password (if required)"
               value={formData.teamJoinPassword}
               autoComplete="current-password"
               onChange={(e) => setFormData((prev: any) => ({ ...prev, teamJoinPassword: e.target.value }))}
@@ -107,6 +107,9 @@ export function TeamModals({
               disabled={loading}
             />
             {errorMsg && <div className="text-red-500 text-xs">{errorMsg}</div>}
+            <div className="text-xs text-[#ad9271] pixel-font">
+              Anyone with a valid team code (and password, if set) can join and collaborate!
+            </div>
             <Button
               type="submit"
               disabled={loading}
@@ -120,3 +123,4 @@ export function TeamModals({
     </>
   );
 }
+

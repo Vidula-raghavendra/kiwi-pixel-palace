@@ -312,19 +312,22 @@ export const useTeams = () => {
     try {
       setLoading(true);
       
+      // Try to find a team by team_code or invite_code (both are valid join methods)
       let { data: team, error: teamError } = await supabase
         .from("teams")
         .select("*")
         .or(`team_code.eq.${teamCode},invite_code.eq.${teamCode}`)
         .maybeSingle();
         
-      if (teamError || !team) throw new Error("Invalid team code");
+      if (teamError || !team) throw new Error("Invalid team code. Please check and try again.");
 
+      // If a password is set, require a correct password.
       if (team.password_hash) {
         const ok = await bcrypt.compare(password, team.password_hash);
-        if (!ok) throw new Error("Incorrect password");
+        if (!ok) throw new Error("Incorrect password. Please try again.");
       }
-
+      
+      // Try to add the user as a team member (role: viewer by default)
       const { error: memberErr } = await supabase
         .from("team_members")
         .insert({
@@ -332,16 +335,17 @@ export const useTeams = () => {
           user_id: user.id,
           role: "viewer",
         });
-        
+
+      // Already a member or unique constraint? Show friendly error.
       if (memberErr && memberErr.message.includes("duplicate key value")) {
-        throw new Error("Already a team member");
+        throw new Error("You are already a member of this team.");
       }
       if (memberErr) throw memberErr;
 
       if (mounted.current) {
         toast({
           title: "Joined Team",
-          description: `You've joined "${team.name}"!`,
+          description: `You've joined "${team.name}" via code!`,
         });
         await fetchTeams();
         setCurrentTeam(team);
@@ -351,7 +355,7 @@ export const useTeams = () => {
     } catch (error: any) {
       if (mounted.current) {
         toast({
-          title: "Error",
+          title: "Error joining team",
           description: error.message || "Failed to join team",
           variant: "destructive",
         });
