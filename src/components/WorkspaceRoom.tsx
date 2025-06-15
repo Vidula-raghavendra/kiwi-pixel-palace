@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -6,6 +5,7 @@ import PixelChatBox from "./pixel/PixelChatBox";
 import PixelTodo from "./pixel/PixelTodo";
 import PixelChatRoom from "./pixel/PixelChatRoom";
 import WorkspaceSidebar from "./WorkspaceSidebar";
+import WorkspaceSidebarPanel from "./WorkspaceSidebarPanel";
 
 export default function WorkspaceRoom() {
   // Removed static demo team state and dropdown
@@ -38,11 +38,13 @@ export default function WorkspaceRoom() {
             </div>
           </div>
           {/* Right column */}
-          <div className="flex flex-col gap-4 min-w-[280px] w-[320px]">
+          <div className="flex flex-col gap-4 min-w-[280px] w-[320px] relative">
+            {/* New sidebar panel */}
+            <WorkspaceSidebarPanel teamId={undefined as any} />
             {/* Top-right: To Do */}
             <PixelTodo />
             {/* Bottom-right: Team Chatroom */}
-            <PixelChatRoom team={undefined as any} /> {/* Remove dependency on static team state */}
+            <PixelChatRoom team={undefined as any} />
           </div>
         </div>
       </div>
