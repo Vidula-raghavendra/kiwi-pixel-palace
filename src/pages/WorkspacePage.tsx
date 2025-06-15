@@ -21,7 +21,7 @@ export default function WorkspacePage() {
     teamName: '',
     teamDesc: '',
     teamPassword: '',
-    inviteCode: '',
+    inviteCode: '', // code to join another team (what "join" uses)
     teamJoinPassword: ''
   });
   const [errorMsg, setErrorMsg] = React.useState("");
@@ -32,7 +32,12 @@ export default function WorkspacePage() {
 
   function handleCard(card: "project" | "team" | "invite") {
     setErrorMsg("");
-    setModal({ ...modalDefaults, [card]: { open: true } });
+    if (card === "invite") {
+      // The "invite" modal is now only for sharing invite code info, so open the join team modal instead
+      setModal({ ...modalDefaults, project: { open: true } });
+    } else {
+      setModal({ ...modalDefaults, [card]: { open: true } });
+    }
   }
 
   function closeAll() {
@@ -68,9 +73,8 @@ export default function WorkspacePage() {
     e.preventDefault();
     setErrorMsg("");
     try {
-      const team = await joinTeam(formData.inviteCode, formData.teamJoinPassword);
+      const team = await joinTeam(formData.inviteCode); // joinTeam only expects code
       closeAll();
-      // Navigate to the joined team's workspace
       setTimeout(() => {
         navigate(`/workspace/${team.id}`);
       }, 500);
@@ -99,6 +103,10 @@ export default function WorkspacePage() {
                       {team.description && (
                         <div className="text-sm text-[#8bb47e]">{team.description}</div>
                       )}
+                      <div className="text-xs mt-2">
+                        Share this invite code for teammates to join instantly:&nbsp;
+                        <span className="bg-[#e2fde4] p-0.5 rounded font-mono">{team.invite_code}</span>
+                      </div>
                     </div>
                     <Button 
                       onClick={() => navigate(`/workspace/${team.id}`)}
@@ -114,10 +122,9 @@ export default function WorkspacePage() {
                 <p className="pixel-font text-[#233f24]">Or create/join a new team:</p>
                 <DashboardCards
                   openCreate={() => handleCard("team")}
-                  openJoin={() => handleCard("invite")}
-                  openInvite={() => handleCard("invite")}
+                  openJoin={() => handleCard("project")} // always open the code modal, not "invite"
+                  openInvite={() => handleCard("project")}
                   loading={loading}
-                  // If DashboardCards expects callbacks with only one argument, make sure to only provide one!
                 />
               </div>
             </div>
@@ -128,7 +135,7 @@ export default function WorkspacePage() {
             closeAll={closeAll}
             loading={loading}
             formData={formData}
-            setFormData={(value) => setFormData({ ...formData, ...value })}
+            setFormData={value => setFormData(prev => ({ ...prev, ...value }))}
             submitCreateTeam={submitCreateTeam}
             submitJoinTeam={submitJoinTeam}
             errorMsg={errorMsg}
@@ -148,12 +155,12 @@ export default function WorkspacePage() {
               Welcome, <span className="text-[#8bb47e]">{userName}</span>!
             </div>
             <div className="pixel-font text-[#233f24] mb-8">
-              Get started by creating a new team or joining an existing one:
+              Get started by creating a new team or joining one with an invite code:
             </div>
             <DashboardCards
               openCreate={() => handleCard("team")}
-              openJoin={() => handleCard("invite")}
-              openInvite={() => handleCard("invite")}
+              openJoin={() => handleCard("project")}
+              openInvite={() => handleCard("project")}
               loading={loading}
             />
           </div>
@@ -164,7 +171,7 @@ export default function WorkspacePage() {
           closeAll={closeAll}
           loading={loading}
           formData={formData}
-          setFormData={(value) => setFormData({ ...formData, ...value })}
+          setFormData={value => setFormData(prev => ({ ...prev, ...value }))}
           submitCreateTeam={submitCreateTeam}
           submitJoinTeam={submitJoinTeam}
           errorMsg={errorMsg}
