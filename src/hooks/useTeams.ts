@@ -51,20 +51,35 @@ export const useTeams = () => {
   const [loading, setLoading] = useState(false);
   const supabaseRef = useRef(supabase);
 
-  // --- Realtime Team Fetchers/Listeners ---
   useEffect(() => {
-    // Realtime updates for teams where you are a member
     if (!user) return;
-    // Always clean up previous channel before creating new one
-    let channel: any;
+    // We store the channel outside so we never create multiple with the same name
+    let channel: any = null;
+
+    // Defensive: First cleanup any previous channel with the same name (Supabase doesn't auto-destroy on fast mount/unmount/re-render)
+    // Explicitly remove it before creating a new one
+    const channelName = "teams_members_presence_" + user.id;
+
+    // Remove any previous channel with this name
+    if (supabaseRef.current && supabaseRef.current.getChannels) {
+      // getChannels() returns an array of all current channels
+      const old = supabaseRef.current.getChannels().find(ch => ch.topic === `realtime:${channelName}`);
+      if (old) {
+        supabaseRef.current.removeChannel(old);
+        // Extra: For debug
+        console.log("[Teams] Removed old realtime channel:", channelName);
+      }
+    }
+
+    // Create the new channel
     if (supabaseRef.current) {
       channel = supabaseRef.current
-        .channel("teams_members_presence_" + user.id) // Use unique name per-user to further avoid double-subs
+        .channel(channelName)
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'team_members', filter: `user_id=eq.${user.id}` },
           (payload) => {
-            // refetch teams if current user affects team_members
+            console.log("[Teams] Received team_members event for user", payload);
             fetchTeams();
           }
         )
@@ -72,20 +87,29 @@ export const useTeams = () => {
           'postgres_changes',
           { event: '*', schema: 'public', table: 'team_members' },
           (payload) => {
-            // refetch teamMembers if our team is affected
             if (currentTeam) {
+              console.log("[Teams] Received team_members event for currentTeam", payload);
               fetchTeamMembers(currentTeam.id);
             }
           }
         )
-        .subscribe();
+        .subscribe((status, err) => {
+          if (status === "SUBSCRIBED") {
+            console.log("[Teams] Subscribed to realtime channel:", channelName);
+          } else if (err) {
+            console.warn("[Teams] Sub failed:", err);
+          }
+        });
     }
+
+    // Cleanup on dismount, user change, or reload
     return () => {
       if (channel && supabaseRef.current) {
         supabaseRef.current.removeChannel(channel);
+        console.log("[Teams] Cleaned up channel:", channelName);
       }
     };
-    // Only triggers when 'user' changes
+    // *CRUCIAL*: Only trigger when user changes, NOT on currentTeam or anything else
   }, [user]);
 
   // Make sure teams always reflect up-to-date memberships on login
