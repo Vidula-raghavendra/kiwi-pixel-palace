@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTeams } from "@/hooks/useTeams";
@@ -147,20 +146,12 @@ export default function WorkspaceSidebar() {
     }
   }
 
-  // --- SIDEBAR NAV/ACTIONS
+  // Updated sidebar actions for clarity and functionality
   const sidebarActions = [
-    {
-      key: "members",
-      label: "Team Members",
-      icon: <Users className="w-5 h-5" />,
-      onClick: null,
-      disabled: true,
-      highlight: false,
-    },
     {
       key: "invite",
       label: "Invite Member",
-      icon: <UserPlus className="w-5 h-5" />,
+      icon: <Users className="w-5 h-5" />,
       onClick: () => setShowInvite(true),
       disabled: !currentTeam,
       highlight: false,
@@ -178,7 +169,7 @@ export default function WorkspaceSidebar() {
   return (
     <SidebarProvider>
       <div className="w-64 flex flex-col h-screen bg-[#f7ffe1] border-r border-[#badc5b]">
-        {/* --- SIDEBAR ACTIONS (NEW) --- */}
+        {/* --- SIDEBAR ACTIONS (Invite + Share Code) --- */}
         <div className="flex flex-col gap-2 p-4">
           {sidebarActions.map((act) => (
             <button
@@ -196,6 +187,7 @@ export default function WorkspaceSidebar() {
         <Separator />
 
         <ScrollArea className="flex-1 space-y-2 p-4">
+          {/* Team Members listing */}
           <div className="pixel-font text-sm text-[#233f24] mb-2">
             Team Members
           </div>
@@ -230,6 +222,7 @@ export default function WorkspaceSidebar() {
         <Separator />
 
         <div className="p-4">
+          {/* Add Project dialog stays at bottom */}
           <Dialog>
             <DialogTrigger asChild>
               <Button className="w-full pixel-font bg-[#8bb47e] hover:bg-[#92c993] text-[#233f24]">
@@ -280,14 +273,16 @@ export default function WorkspaceSidebar() {
           </Dialog>
         </div>
 
-        {/* ----------- INVITE & SHARE CODE MODALS ----------- */}
+        {/* ----------- TEAM ACTION MODALS ----------- */}
         {currentTeam && (
           <>
+            {/* Invite Modal: only email/github fields for inviting people */}
             <InviteModal
               open={showInvite}
               onClose={() => setShowInvite(false)}
               teamId={currentTeam.id}
             />
+            {/* ShareCode Modal: show latest code + copy/generate */}
             <ShareCodeModal
               open={showCode}
               onClose={() => setShowCode(false)}
@@ -299,4 +294,3 @@ export default function WorkspaceSidebar() {
     </SidebarProvider>
   );
 }
-

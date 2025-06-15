@@ -76,20 +76,69 @@ export function TeamModals({
         </DialogContent>
       </Dialog>
 
-      {/* Join Team Modal */}
+      {/* Invite Member Modal (invite by email or github, NO code field here) */}
       <Dialog open={modal.invite.open} onOpenChange={closeAll}>
         <DialogContent className="pixel-outline bg-[#fffde8] !rounded-lg shadow-2xl max-w-md z-[100]">
           <DialogHeader>
-            <DialogTitle className="pixel-font text-[#badc5b]">Join Team</DialogTitle>
+            <DialogTitle className="pixel-font text-[#badc5b]">Invite Member</DialogTitle>
             <DialogDescription className="pixel-font text-[#7b6449] text-sm">
-              Enter a team code (shared by any member or in workspace sidebar) to join a team instantly. A password is only required if set for that team.
+              Invite a collaborator by email or GitHub username. The invited person will receive a notification to join the team.
+            </DialogDescription>
+          </DialogHeader>
+          <form className="flex flex-col gap-4 mt-4" 
+                onSubmit={e => {
+                  // Optionally, you might want to call a custom invite handler
+                  // but will re-use join logic for now (ensure on backend only allowed for invited users)
+                  e.preventDefault();
+                }}>
+            <Input
+              name="inviteEmail"
+              type="email"
+              placeholder="Friend's Email"
+              value={formData.inviteEmail || ""}
+              onChange={e => setFormData((prev: any) => ({ ...prev, inviteEmail: e.target.value }))}
+              className="pixel-outline bg-[#f9fbe3] text-[#233f24]"
+              autoFocus
+              disabled={loading}
+            />
+            <Input
+              name="inviteGithub"
+              type="text"
+              placeholder="Github Username"
+              value={formData.inviteGithub || ""}
+              onChange={e => setFormData((prev: any) => ({ ...prev, inviteGithub: e.target.value }))}
+              className="pixel-outline bg-[#f9fbe3] text-[#233f24]"
+              disabled={loading}
+            />
+            {errorMsg && <div className="text-red-500 text-xs">{errorMsg}</div>}
+            <Button
+              type="submit"
+              disabled={loading}
+              className="mt-2 pixel-font bg-[#badc5b] hover:bg-[#d8e893] text-[#233f24] !rounded"
+            >
+              {loading ? 'Inviting...' : 'Send Invite'}
+            </Button>
+          </form>
+          <div className="text-xs text-[#ad9271] pixel-font mt-1">
+            Anyone with a join code can also join instantly—share your code from the workspace sidebar!
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Join Team Modal (just a code (and password, if set) field) */}
+      <Dialog open={modal.project.open} onOpenChange={closeAll}>
+        <DialogContent className="pixel-outline bg-[#fffde8] !rounded-lg shadow-2xl max-w-md z-[100]">
+          <DialogHeader>
+            <DialogTitle className="pixel-font text-[#8bb47e]">Join Team</DialogTitle>
+            <DialogDescription className="pixel-font text-[#7b6449] text-sm">
+              Enter a join code (shared by any member or in workspace) to join a team instantly. Enter password only if required.
             </DialogDescription>
           </DialogHeader>
           <form className="flex flex-col gap-4 mt-4" onSubmit={submitJoinTeam}>
             <Input
-              name="invite"
+              name="inviteCode"
               required
-              placeholder="Enter Team Code"
+              placeholder="Join Code"
               value={formData.inviteCode}
               onChange={(e) => setFormData((prev: any) => ({ ...prev, inviteCode: e.target.value }))}
               className="pixel-outline bg-[#f9fbe3] text-[#233f24]"
@@ -107,20 +156,19 @@ export function TeamModals({
               disabled={loading}
             />
             {errorMsg && <div className="text-red-500 text-xs">{errorMsg}</div>}
-            <div className="text-xs text-[#ad9271] pixel-font">
-              Anyone with a valid team code (and password, if set) can join and collaborate!
-            </div>
             <Button
               type="submit"
               disabled={loading}
-              className="mt-2 pixel-font bg-[#badc5b] hover:bg-[#d8e893] text-[#233f24] !rounded"
+              className="mt-2 pixel-font bg-[#8bb47e] hover:bg-[#92c993] text-[#233f24] !rounded"
             >
               {loading ? 'Joining...' : 'Join Team'}
             </Button>
           </form>
+          <div className="text-xs text-[#ad9271] pixel-font mt-1">
+            Don't have a code? Ask your teammates to share their join code!
+          </div>
         </DialogContent>
       </Dialog>
     </>
   );
 }
-
