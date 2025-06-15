@@ -17,9 +17,10 @@ type Message = {
 };
 
 export default function PixelChatRoom({ team }: { team: Team }) {
-  const { messages, sendMessage, loading } = useTeamChat(team?.id);
+  const { messages, sendMessage, loading, error } = useTeamChat(team?.id);
   const [input, setInput] = useState("");
   const logRef = useRef<HTMLDivElement | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   useEffect(() => {
     if (logRef.current) {
@@ -30,8 +31,14 @@ export default function PixelChatRoom({ team }: { team: Team }) {
   function handleSend(e: React.FormEvent) {
     e.preventDefault();
     if (!input.trim()) return;
-    sendMessage(input);
-    setInput("");
+    sendMessage(input).then((result) => {
+      if (!result?.ok) {
+        setLocalError(result.error || "Could not send the message.");
+      } else {
+        setLocalError(null); // sent ok!
+        setInput("");
+      }
+    });
   }
 
   return (
@@ -39,6 +46,16 @@ export default function PixelChatRoom({ team }: { team: Team }) {
       <div className="pixel-title pixel-font text-[#8bb47e] text-[13px] mb-2">
         TEAM CHAT ROOM
       </div>
+      {error && (
+        <div className="bg-red-100 border border-red-400 rounded px-2 py-1 mb-2 text-xs text-red-700 pixel-font">
+          {error}
+        </div>
+      )}
+      {localError && (
+        <div className="bg-yellow-100 border border-yellow-400 rounded px-2 py-1 mb-2 text-xs text-yellow-700 pixel-font">
+          {localError}
+        </div>
+      )}
       <div
         className="flex-1 overflow-y-auto px-1 mb-2 border border-[#e2fde4] rounded"
         ref={logRef}
@@ -86,11 +103,13 @@ export default function PixelChatRoom({ team }: { team: Team }) {
           placeholder="Message team..."
           maxLength={160}
           spellCheck={false}
+          disabled={!!error || loading}
         />
         <button
           type="submit"
           className="pixel-font bg-[#badc5b] hover:bg-[#aed57a] text-[#233f24] rounded px-2 py-1 shadow transition"
           style={{ fontWeight: 700, fontSize: "13px" }}
+          disabled={!!error || loading || !input.trim()}
         >
           Send
         </button>
@@ -98,3 +117,4 @@ export default function PixelChatRoom({ team }: { team: Team }) {
     </div>
   );
 }
+
