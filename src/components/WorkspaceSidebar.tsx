@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { LogOut, Users, User, Copy, Plus, Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,7 +39,7 @@ export default function WorkspaceSidebar() {
   // Invite/Share/Members panel logic
   const teamId = currentTeam?.id;
   const {
-    canDeleteTeam,
+    canDeleteTeam, // "Delete" if you're team creator
     handleLeaveTeam,
     handleDeleteTeam,
     loading: panelLoading,
@@ -259,26 +258,30 @@ export default function WorkspaceSidebar() {
         </div>
       </div>
 
-      {/* Leave or Delete team actions */}
+      {/* Leave, Delete, and Logout actions - always shown at very bottom for seamless deletion */}
       <div className="mb-6 px-6">
-        {canDeleteTeam ? (
+        {/* Only show Delete Team button for creators/admins */}
+        {canDeleteTeam && (
           <Button
             className="w-full flex gap-2 pixel-font text-red-600 border border-red-300 bg-[#fbeeee] hover:bg-[#fbdddd]"
-            onClick={handleDeleteTeam}
+            onClick={() => {
+              if (window.confirm("Are you sure you want to delete this team? This cannot be undone.")) {
+                handleDeleteTeam();
+              }
+            }}
             disabled={panelLoading}
           >
-            <Trash2 size={16} /> Delete Team
-          </Button>
-        ) : (
-          <Button
-            variant="outline"
-            className="w-full flex gap-2 pixel-font text-[#ad9271] border-[#ad9271]"
-            onClick={handleLeaveTeam}
-            disabled={panelLoading}
-          >
-            <Trash2 size={16} /> Leave Team
+            Delete Team
           </Button>
         )}
+        <Button
+          variant="outline"
+          className="w-full flex gap-2 pixel-font text-[#ad9271] border-[#ad9271] mt-2"
+          onClick={handleLeaveTeam}
+          disabled={panelLoading}
+        >
+          <Trash2 size={16} /> Leave Team
+        </Button>
         <Button
           variant="outline"
           className="w-full flex gap-2 items-center pixel-outline text-[#ad9271] hover:bg-[#fff6eb] border-2 border-[#ad9271] mt-4"

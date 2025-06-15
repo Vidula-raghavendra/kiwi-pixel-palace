@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -49,13 +49,54 @@ export const useTeams = () => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
+  const supabaseRef = useRef(supabase);
 
-  // Only fetch teams user is a member of (via team_members)
+  // --- Realtime Team Fetchers/Listeners ---
+  useEffect(() => {
+    // Realtime updates for teams where you are a member
+    if (!user) return;
+    const channel = supabaseRef.current
+      .channel("teams_members_presence")
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'team_members', filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          // refetch teams if current user affects team_members
+          fetchTeams();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'team_members' },
+        (payload) => {
+          // refetch teamMembers if our team is affected
+          if (currentTeam) {
+            fetchTeamMembers(currentTeam.id);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabaseRef.current.removeChannel(channel);
+    };
+    // eslint-disable-next-line
+  }, [user, currentTeam?.id]);
+
+  // Make sure teams always reflect up-to-date memberships on login
+  useEffect(() => {
+    if (user) fetchTeams();
+  }, [user]);
+
+  useEffect(() => {
+    if (currentTeam) fetchTeamMembers(currentTeam.id);
+  }, [currentTeam]);
+
+  // Fix for team join/leave/creation -- setCurrentTeam after fetch
   const fetchTeams = async () => {
     if (!user) return;
     try {
       setLoading(true);
-      // Join team_members → teams for correct filter
       const { data, error } = await supabase
         .from("team_members")
         .select("team_id, teams (*)")
@@ -65,6 +106,14 @@ export const useTeams = () => {
       const fetchedTeams: Team[] =
         data?.map((row: any) => row.teams).filter(Boolean) || [];
       setTeams(fetchedTeams);
+      // Keep currentTeam in sync if it's not found in fetchedTeams (ex: just left/deleted)
+      if (fetchedTeams.length > 0) {
+        if (!currentTeam || !fetchedTeams.some(t => t.id === currentTeam.id)) {
+          setCurrentTeam(fetchedTeams[0]);
+        }
+      } else {
+        setCurrentTeam(null);
+      }
     } catch (error: any) {
       console.error("Error fetching teams (membership-based):", error);
       toast({
@@ -72,6 +121,8 @@ export const useTeams = () => {
         description: "Failed to load teams",
         variant: "destructive",
       });
+      setTeams([]);
+      setCurrentTeam(null);
     } finally {
       setLoading(false);
     }
@@ -190,11 +241,11 @@ export const useTeams = () => {
     if (!user) throw new Error("User not authenticated");
     try {
       setLoading(true);
-      // 1. find team by code
-      const { data: team, error: teamError } = await supabase
+      // 1. find team by code (allow both invite_code or team_code for flexibility)
+      let { data: team, error: teamError } = await supabase
         .from("teams")
         .select("*")
-        .eq("team_code", teamCode)
+        .or(`team_code.eq.${teamCode},invite_code.eq.${teamCode}`)
         .maybeSingle();
       if (teamError || !team) throw new Error("Invalid team code");
 
@@ -204,7 +255,7 @@ export const useTeams = () => {
         if (!ok) throw new Error("Incorrect password");
       }
 
-      // 3. insert member (RLS will allow only if not already a member)
+      // 3. insert member (viewer)
       const { error: memberErr } = await supabase
         .from("team_members")
         .insert({
@@ -212,20 +263,18 @@ export const useTeams = () => {
           user_id: user.id,
           role: "viewer",
         });
-      if (memberErr) {
-        if (
-          memberErr.message &&
-          memberErr.message.includes("duplicate key value")
-        ) {
-          throw new Error("Already a team member");
-        }
-        throw memberErr;
+      if (memberErr && memberErr.message.includes("duplicate key value")) {
+        throw new Error("Already a team member");
       }
+      if (memberErr) throw memberErr;
+
       toast({
         title: "Joined Team",
         description: `You've joined "${team.name}"!`,
       });
+      // Ensure teams get refetched immediately
       await fetchTeams();
+      setCurrentTeam(team);
       return team;
     } catch (error: any) {
       toast({
@@ -274,18 +323,6 @@ export const useTeams = () => {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (user) {
-      fetchTeams();
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (currentTeam) {
-      fetchTeamMembers(currentTeam.id);
-    }
-  }, [currentTeam]);
 
   return {
     teams,
