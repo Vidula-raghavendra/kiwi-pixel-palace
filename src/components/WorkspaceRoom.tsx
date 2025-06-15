@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import PixelChatBox from "./pixel/PixelChatBox";
@@ -15,7 +15,7 @@ export default function WorkspaceRoom() {
   const { user } = useAuth();
   const { teams, currentTeam, setCurrentTeam, loading } = useTeams();
 
-  // Early return if user is not authenticated
+  // If user is not authenticated, force login screen
   if (!user) {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#e2fde4]">
@@ -27,33 +27,30 @@ export default function WorkspaceRoom() {
     );
   }
 
-  // New: handle impossible/invalid state
+  // Always keep teams up-to-date for the room, but don't redirect unless loaded
   useEffect(() => {
-    if (!loading && (!teams || teams.length === 0)) {
-      // Immediately redirect if no teams exist
-      navigate("/workspace", { replace: true });
-    }
-    // If loaded and we have an invalid team id, force back to /workspace
-    if (
-      !loading &&
-      id &&
-      teams &&
-      teams.length > 0 &&
-      !teams.find((t) => t.id === id)
-    ) {
-      navigate("/workspace", { replace: true });
-    }
-  }, [id, loading, teams, navigate]);
+    // Only run this after loading finished
+    if (loading) return;
 
+    // If teams array is truly empty and loading finished, show onboarding—do NOT redirect (handled below)
+    if (!teams || teams.length === 0) return;
+
+    // Both teams loaded and id present
+    // If the current id does not match any team, redirect to workspace hub
+    if (id && !teams.find((t) => t.id === id)) {
+      navigate("/workspace", { replace: true });
+    }
+  }, [id, teams, loading, navigate]);
+
+  // Always update currentTeam if a new id is loaded (after teams are loaded!)
   useEffect(() => {
     if (id && teams && teams.length > 0) {
-      const targetTeam = teams.find(t => t.id === id);
-      if (targetTeam) {
-        setCurrentTeam(targetTeam);
-      }
+      const targetTeam = teams.find((t) => t.id === id);
+      if (targetTeam) setCurrentTeam(targetTeam);
     }
   }, [id, teams, setCurrentTeam]);
 
+  // While loading, show loader
   if (loading) {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#e2fde4]">
@@ -62,6 +59,7 @@ export default function WorkspaceRoom() {
     );
   }
 
+  // If (after loading) there are no teams, onboard
   if (!teams || teams.length === 0) {
     return (
       <div className="flex flex-col min-h-screen w-full items-center justify-center bg-[#e2fde4]">
@@ -78,6 +76,7 @@ export default function WorkspaceRoom() {
     );
   }
 
+  // Default fallback: show the room for the found team (or fallback to first)
   const displayTeam = currentTeam || teams[0];
 
   return (
