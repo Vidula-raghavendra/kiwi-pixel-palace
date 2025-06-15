@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,7 @@ export function TeamModals({
   closeAll: () => void;
   loading: boolean;
   formData: any;
-  setFormData: React.Dispatch<React.SetStateAction<any>>;
+  setFormData: (value: Partial<any>) => void; // <-- ENSURE: setFormData expects ONE object argument, not two!
   submitCreateTeam: (e: React.FormEvent) => Promise<void>;
   submitJoinTeam: (e: React.FormEvent) => Promise<void>;
   errorMsg: string;
@@ -41,7 +40,7 @@ export function TeamModals({
               required
               placeholder="Team Name"
               value={formData.teamName}
-              onChange={(e) => setFormData((prev: any) => ({ ...prev, teamName: e.target.value }))}
+              onChange={(e) => setFormData({ teamName: e.target.value })}
               className="pixel-outline bg-[#f9fbe3] text-[#233f24]"
               autoFocus
               disabled={loading}
@@ -50,7 +49,7 @@ export function TeamModals({
               name="desc"
               placeholder="Team Description (optional)"
               value={formData.teamDesc}
-              onChange={(e) => setFormData((prev: any) => ({ ...prev, teamDesc: e.target.value }))}
+              onChange={(e) => setFormData({ teamDesc: e.target.value })}
               className="pixel-outline bg-[#f9fbe3] text-[#7b6449]"
               disabled={loading}
             />
@@ -60,7 +59,7 @@ export function TeamModals({
               placeholder="Team Password (optional)"
               value={formData.teamPassword}
               autoComplete="new-password"
-              onChange={(e) => setFormData((prev: any) => ({ ...prev, teamPassword: e.target.value }))}
+              onChange={(e) => setFormData({ teamPassword: e.target.value })}
               className="pixel-outline bg-[#f9fbe3] text-[#233f24]"
               disabled={loading}
             />
@@ -87,8 +86,6 @@ export function TeamModals({
           </DialogHeader>
           <form className="flex flex-col gap-4 mt-4" 
                 onSubmit={e => {
-                  // Optionally, you might want to call a custom invite handler
-                  // but will re-use join logic for now (ensure on backend only allowed for invited users)
                   e.preventDefault();
                 }}>
             <Input
@@ -96,7 +93,7 @@ export function TeamModals({
               type="email"
               placeholder="Friend's Email"
               value={formData.inviteEmail || ""}
-              onChange={e => setFormData((prev: any) => ({ ...prev, inviteEmail: e.target.value }))}
+              onChange={e => setFormData({ inviteEmail: e.target.value })}
               className="pixel-outline bg-[#f9fbe3] text-[#233f24]"
               autoFocus
               disabled={loading}
@@ -106,7 +103,7 @@ export function TeamModals({
               type="text"
               placeholder="Github Username"
               value={formData.inviteGithub || ""}
-              onChange={e => setFormData((prev: any) => ({ ...prev, inviteGithub: e.target.value }))}
+              onChange={e => setFormData({ inviteGithub: e.target.value })}
               className="pixel-outline bg-[#f9fbe3] text-[#233f24]"
               disabled={loading}
             />
@@ -140,7 +137,7 @@ export function TeamModals({
               required
               placeholder="Join Code"
               value={formData.inviteCode}
-              onChange={(e) => setFormData((prev: any) => ({ ...prev, inviteCode: e.target.value }))}
+              onChange={(e) => setFormData({ inviteCode: e.target.value })}
               className="pixel-outline bg-[#f9fbe3] text-[#233f24]"
               autoFocus
               disabled={loading}
@@ -151,7 +148,7 @@ export function TeamModals({
               placeholder="Team Password (if required)"
               value={formData.teamJoinPassword}
               autoComplete="current-password"
-              onChange={(e) => setFormData((prev: any) => ({ ...prev, teamJoinPassword: e.target.value }))}
+              onChange={(e) => setFormData({ teamJoinPassword: e.target.value })}
               className="pixel-outline bg-[#f9fbe3] text-[#233f24]"
               disabled={loading}
             />

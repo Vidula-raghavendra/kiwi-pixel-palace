@@ -128,7 +128,7 @@ export default function WorkspacePage() {
             closeAll={closeAll}
             loading={loading}
             formData={formData}
-            setFormData={(value) => setFormData({ ...formData, ...value })} // Fix: use spread for partial updates
+            setFormData={(value) => setFormData({ ...formData, ...value })}
             submitCreateTeam={submitCreateTeam}
             submitJoinTeam={submitJoinTeam}
             errorMsg={errorMsg}
@@ -164,7 +164,7 @@ export default function WorkspacePage() {
           closeAll={closeAll}
           loading={loading}
           formData={formData}
-          setFormData={(value) => setFormData({ ...formData, ...value })} // Fix: ensure single argument
+          setFormData={(value) => setFormData({ ...formData, ...value })}
           submitCreateTeam={submitCreateTeam}
           submitJoinTeam={submitJoinTeam}
           errorMsg={errorMsg}
