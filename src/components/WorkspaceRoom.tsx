@@ -1,14 +1,18 @@
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import PixelChatBox from "./pixel/PixelChatBox";
 import PixelTodo from "./pixel/PixelTodo";
 import PixelChatRoom from "./pixel/PixelChatRoom";
 import WorkspaceSidebar from "./WorkspaceSidebar";
-import WorkspaceSidebarPanel from "./WorkspaceSidebarPanel";
 
 export default function WorkspaceRoom() {
-  // Removed static demo team state and dropdown
+  // Defensive render: Render everything, but show a message if there is no valid team context.
+  // We keep the rest of the layout for user experience.
+
+  // You can use context here if needed, but the main thing is no crash if missing team.
+  // Optionally: show a message about missing team.
+
   return (
     <div className="relative w-full min-h-screen bg-[#e2fde4] flex flex-row">
       {/* Left: Workspace Sidebar */}
@@ -39,10 +43,10 @@ export default function WorkspaceRoom() {
           </div>
           {/* Right column */}
           <div className="flex flex-col gap-4 min-w-[320px] w-[340px] relative">
-            {/* WorkspaceSidebarPanel removed */}
             {/* Top-right: To Do */}
             <PixelTodo />
             {/* Bottom-right: Team Chatroom */}
+            {/* Render placeholder if currentTeam is undefined */}
             <PixelChatRoom team={undefined as any} />
           </div>
         </div>

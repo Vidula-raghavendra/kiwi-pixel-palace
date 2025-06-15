@@ -55,32 +55,37 @@ export const useTeams = () => {
   useEffect(() => {
     // Realtime updates for teams where you are a member
     if (!user) return;
-    const channel = supabaseRef.current
-      .channel("teams_members_presence")
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'team_members', filter: `user_id=eq.${user.id}` },
-        (payload) => {
-          // refetch teams if current user affects team_members
-          fetchTeams();
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'team_members' },
-        (payload) => {
-          // refetch teamMembers if our team is affected
-          if (currentTeam) {
-            fetchTeamMembers(currentTeam.id);
+    // Always clean up previous channel before creating new one
+    let channel: any;
+    if (supabaseRef.current) {
+      channel = supabaseRef.current
+        .channel("teams_members_presence_" + user.id) // Use unique name per-user to further avoid double-subs
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'team_members', filter: `user_id=eq.${user.id}` },
+          (payload) => {
+            // refetch teams if current user affects team_members
+            fetchTeams();
           }
-        }
-      )
-      .subscribe();
-
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'team_members' },
+          (payload) => {
+            // refetch teamMembers if our team is affected
+            if (currentTeam) {
+              fetchTeamMembers(currentTeam.id);
+            }
+          }
+        )
+        .subscribe();
+    }
     return () => {
-      supabaseRef.current.removeChannel(channel);
+      if (channel && supabaseRef.current) {
+        supabaseRef.current.removeChannel(channel);
+      }
     };
-    // Fix: Remove currentTeam?.id from deps so only triggers when 'user' changes
+    // Only triggers when 'user' changes
   }, [user]);
 
   // Make sure teams always reflect up-to-date memberships on login

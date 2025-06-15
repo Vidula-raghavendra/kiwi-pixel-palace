@@ -150,6 +150,25 @@ export default function WorkspaceSidebar() {
 
   // Show current team (fallback first team)
   const displayTeam = currentTeam || teams[0];
+
+  // In case teams and currentTeam are both not loaded, show a loader early to prevent blank crash
+  if (!displayTeam && loading) {
+    return (
+      <aside className="bg-[#fffde8] border-r border-[#badc5b] min-w-[250px] max-w-[270px] flex flex-col justify-between h-screen z-30 shadow-lg">
+        <div className="flex flex-col items-center justify-center h-full">
+          <span className="text-[#badc5b] pixel-font text-lg">Loading teams...</span>
+        </div>
+      </aside>
+    );
+  }
+  if (!displayTeam && !loading) {
+    return (
+      <aside className="bg-[#fffde8] border-r border-[#badc5b] min-w-[250px] max-w-[270px] flex flex-col justify-center items-center h-screen z-30 shadow-lg">
+        <span className="pixel-font text-red-500 text-sm mt-10">No team context available.<br />Please join or create a team.</span>
+      </aside>
+    );
+  }
+
   React.useEffect(() => {
     if (!currentTeam && teams.length > 0) setCurrentTeam(teams[0]);
     if (displayTeam) fetchTeamMembers(displayTeam.id);
