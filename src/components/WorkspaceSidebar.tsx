@@ -21,6 +21,7 @@ import ShareCodeModal from "@/components/ui/ShareCodeModal";
 import { useTeamPresence } from "@/hooks/useTeamPresence";
 import { User as UserIcon } from "lucide-react";
 import { Plus, Users, Share2 } from "lucide-react";
+import ViewWorkspaceSnapshotModal from "@/components/ViewWorkspaceSnapshotModal";
 
 // New: show profile presence modal state
 type Member = any;
@@ -68,6 +69,8 @@ export default function WorkspaceSidebar() {
   // ---- NEW MODAL LOGIC ----
   const [showInvite, setShowInvite] = React.useState(false);
   const [showCode, setShowCode] = React.useState(false);
+  const [showSnapshotModal, setShowSnapshotModal] = React.useState(false);
+  const [snapshotMember, setSnapshotMember] = React.useState<Member | null>(null);
 
   // MVP: use presence for current team
   const presence = useTeamPresence({
@@ -187,8 +190,12 @@ export default function WorkspaceSidebar() {
                 type="button"
                 className="flex items-center space-x-2 py-2 hover:bg-[#e2fde4] rounded w-full mb-1 transition pixel-font text-left"
                 onClick={() => {
-                  setSelectedMember(member);
-                  setShowMemberPresence(true);
+                  setSnapshotMember({
+                    user_id: member.user_id || member.id,
+                    profiles: member.profiles,
+                    role: member.role,
+                  });
+                  setShowSnapshotModal(true);
                 }}
               >
                 <Avatar className="h-6 w-6">
@@ -271,6 +278,16 @@ export default function WorkspaceSidebar() {
               </Button>
             </DialogContent>
           </Dialog>
+        )}
+
+        {/* NEW: Workspace Snapshot Modal */}
+        {snapshotMember && (
+          <ViewWorkspaceSnapshotModal
+            open={showSnapshotModal}
+            onClose={() => setShowSnapshotModal(false)}
+            teamId={currentTeam?.id || ""}
+            member={snapshotMember}
+          />
         )}
 
         <Separator />

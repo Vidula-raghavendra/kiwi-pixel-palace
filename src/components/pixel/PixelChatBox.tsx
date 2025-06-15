@@ -1,4 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useParams } from "react-router-dom";
+import { upsertTeamChatSnapshot } from "@/hooks/useTeamSnapshots";
 
 // Minimal ChatMessage type
 type ChatMessage = {
@@ -13,12 +16,24 @@ export default function PixelChatBox({ taller = false }: { taller?: boolean }) {
   ]);
   const [loading, setLoading] = useState(false);
   const chatBodyRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
+  const { id: teamId } = useParams();
 
   // Scroll to latest message
   useEffect(() => {
     if (chatBodyRef.current) {
       chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
     }
+  }, [messages]);
+
+  // Save snapshot on chat change (debounced)
+  useEffect(() => {
+    if (!user || !teamId) return;
+    const timeout = setTimeout(() => {
+      upsertTeamChatSnapshot(teamId, user.id, messages);
+    }, 700); // debounce
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line
   }, [messages]);
 
   async function askGemini(question: string) {

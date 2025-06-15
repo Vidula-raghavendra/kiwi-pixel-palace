@@ -1,5 +1,7 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useParams } from "react-router-dom";
+import { upsertTeamTodoSnapshot } from "@/hooks/useTeamSnapshots";
 import { Trash2, Edit, Plus } from "lucide-react";
 
 type Todo = {
@@ -16,6 +18,18 @@ export default function PixelTodo() {
   const [newTask, setNewTask] = useState("");
   const [editIdx, setEditIdx] = useState<number | null>(null);
   const [editTask, setEditTask] = useState("");
+  const { user } = useAuth();
+  const { id: teamId } = useParams();
+
+  // Save snapshot when todos change (debounced)
+  useEffect(() => {
+    if (!user || !teamId) return;
+    const timeout = setTimeout(() => {
+      upsertTeamTodoSnapshot(teamId, user.id, todos);
+    }, 700); // debounce
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line
+  }, [todos]);
 
   const toggleTodo = (idx: number) => {
     setTodos((prev) =>
