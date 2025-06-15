@@ -1,3 +1,4 @@
+
 import React from "react";
 import PixelMascot from "../components/PixelMascot";
 import Pixel3DButton from "../components/Pixel3DButton";
@@ -67,7 +68,17 @@ export default function LandingPage() {
       <AboutSection />
       <FeaturesSection />
 
+      {/* Additional rich Storyblok content - Tips & News */}
+      <div className="w-full max-w-xl mx-auto mt-10 mb-8">
+        <div className="pixel-font text-[#ad9271] text-lg mb-2 pl-1">📰 Tips & News from the Team</div>
+        <StoryblokBlock
+          apiKey="3g8JZw33SLAbX0dAYNuNhgtt-293643-b2juxchnAieqaayEUA1b"
+          storySlug="news"
+        />
+      </div>
+
       <FooterSection />
     </main>
   );
 }
+
