@@ -1,11 +1,12 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 
 export type UserChat = {
   id: string;
   user_id: string;
   team_id: string;
-  thread: any;
+  thread: Json;
   created_at: string;
   updated_at: string;
   llm_provider?: string;
@@ -25,7 +26,16 @@ export async function fetchUserChats(team_id: string, user_id: string) {
 }
 
 // Create or update (upsert) user's chat thread for a team
-export async function upsertUserChat(chat: Partial<UserChat> & { user_id: string; team_id: string; }) {
+export async function upsertUserChat(chat: {
+  user_id: string;
+  team_id: string;
+  thread: Json;
+  llm_provider?: string;
+  last_used_at?: string;
+  updated_at?: string;
+  created_at?: string;
+  id?: string;
+}) {
   const { data, error } = await supabase
     .from("user_chats")
     .upsert([chat], { onConflict: "user_id,team_id" })

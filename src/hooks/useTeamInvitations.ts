@@ -23,11 +23,11 @@ export function useTeamInvitations(teamId?: string) {
   // Fetch invitations for a team (admin or member view)
   const fetchInvitations = async () => {
     setLoading(true);
-    const query = supabase
+    let query = supabase
       .from("team_invitations")
       .select("*")
       .order("created_at", { ascending: false });
-    if (teamId) query.eq("team_id", teamId);
+    if (teamId) query = query.eq("team_id", teamId);
 
     const { data, error } = await query;
     if (error) {
@@ -44,11 +44,17 @@ export function useTeamInvitations(teamId?: string) {
     team_id,
     email,
     github_username,
-  }: { team_id: string, email?: string, github_username?: string }) => {
+    invited_by,
+  }: { team_id: string, email?: string, github_username?: string, invited_by: string }) => {
     setLoading(true);
     const { data, error } = await supabase
       .from("team_invitations")
-      .insert([{ team_id, email: email || null, github_username: github_username || null }])
+      .insert([{
+        team_id,
+        email: email || null,
+        github_username: github_username || null,
+        invited_by,
+      }])
       .select()
       .single();
     setLoading(false);
@@ -84,3 +90,4 @@ export function useTeamInvitations(teamId?: string) {
     acceptInvitation,
   };
 }
+
