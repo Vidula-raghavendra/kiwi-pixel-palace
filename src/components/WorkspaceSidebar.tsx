@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTeams } from "@/hooks/useTeams";
@@ -11,6 +10,7 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useTeamSidebarPanel } from "@/hooks/useTeamSidebarPanel";
@@ -277,13 +277,14 @@ export default function WorkspaceSidebar() {
 
         <div className="p-4">
           {/* Add Project dialog stays at bottom */}
+          {/* Correct Dialog Trigger here */}
           <Dialog>
-            <Dialog.Trigger asChild>
+            <DialogTrigger asChild>
               <Button className="w-full pixel-font bg-[#8bb47e] hover:bg-[#92c993] text-[#233f24]">
                 <Plus className="mr-2 h-4 w-4" />
                 Add Project
               </Button>
-            </Dialog.Trigger>
+            </DialogTrigger>
             <DialogContent className="sm:max-w-[425px] bg-[#f7ffe1] border-[#badc5b]">
               <div className="flex flex-col gap-2">
                 <DialogTitle className="pixel-font text-lg text-[#233f24]">
