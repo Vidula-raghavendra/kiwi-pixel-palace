@@ -20,15 +20,28 @@ export default function StoryblokBlock({
       setError("Set your Storyblok API key in StoryblokBlock.tsx");
       return;
     }
+    // Add better debug output
     fetch(
       `https://api.storyblok.com/v2/cdn/stories/${storySlug}?token=${PUBLIC_API_KEY}`
     )
       .then((res) => res.json())
       .then((data) => {
-        setStory(data.story || null);
-        setError("");
+        console.log("Storyblok API result:", data);
+        if (data.story) {
+          setStory(data.story);
+          setError("");
+        } else if (data.error) {
+          setError("Storyblok error: " + data.error);
+          setStory(null);
+        } else {
+          setError("No story/content found for slug: " + storySlug);
+          setStory(null);
+        }
       })
-      .catch(() => setError("Error fetching Storyblok content"));
+      .catch((e) => {
+        console.error("Storyblok fetch error:", e);
+        setError("Error fetching Storyblok content");
+      });
   }, [storySlug, apiKey]);
 
   if (error)
@@ -59,3 +72,4 @@ export default function StoryblokBlock({
     </div>
   );
 }
+
