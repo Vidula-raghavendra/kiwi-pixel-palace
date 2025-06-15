@@ -13,7 +13,6 @@ export default function PixelChatBox() {
     { sender: "ai", text: "Hello! Ask me anything ✨" },
   ]);
   const [loading, setLoading] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
   const chatBodyRef = useRef<HTMLDivElement>(null);
 
   // Scroll to latest message
@@ -38,17 +37,19 @@ export default function PixelChatBox() {
       if (res.ok && data?.result) {
         setMessages((msgs) => [...msgs, { sender: "ai", text: data.result }]);
       } else {
-        // Always show what Gemini said
+        // pass through the error from backend
         setMessages((msgs) => [
           ...msgs,
           {
             sender: "ai",
             text:
-              "❗Error communicating with Gemini\n" +
-              (data?.error ? "Error: " + data.error + "\n" : "") +
-              (data?.status ? "Status: " + data.status + "\n" : "") +
+              "❗ Error: " +
+              (typeof data?.error === "string"
+                ? data.error
+                : JSON.stringify(data?.error)) +
+              (data?.status ? ` [Status: ${data.status}]` : "") +
               (data?.raw
-                ? "Gemini's full response:\n" + JSON.stringify(data.raw, null, 2)
+                ? "\nRaw: " + JSON.stringify(data.raw, null, 2)
                 : ""),
           },
         ]);
@@ -58,7 +59,7 @@ export default function PixelChatBox() {
         ...msgs,
         {
           sender: "ai",
-          text: "❗Network error: " + (err?.message || "Unknown error"),
+          text: "❗ Network error: " + (err?.message || "Unknown error"),
         },
       ]);
     }
@@ -130,7 +131,6 @@ export default function PixelChatBox() {
           onSubmit={handleSubmit}
         >
           <input
-            ref={inputRef}
             type="text"
             className="flex-1 px-2 py-1 border border-gray-200 rounded focus:outline-none focus:ring"
             placeholder="Type your question..."

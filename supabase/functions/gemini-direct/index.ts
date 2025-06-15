@@ -1,5 +1,5 @@
 
-// Minimal, robust Gemini Edge Function for Lovable/Supabase
+// Minimal Edge Function to call Gemini, using secret from Supabase
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -19,31 +19,24 @@ serve(async (req) => {
 
   if (!GEMINI_API_KEY) {
     return new Response(
-      JSON.stringify({ error: "GEMINI_API_KEY not configured in Supabase secrets." }),
+      JSON.stringify({ error: "GEMINI_API_KEY not set. Configure this secret in Supabase." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 
-  // Parse request
   let prompt = "";
   try {
     const json = await req.json();
     prompt = json.prompt;
+    if (!prompt || typeof prompt !== "string") throw "No prompt";
   } catch {
     return new Response(
-      JSON.stringify({ error: "Invalid JSON body." }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  }
-  if (!prompt) {
-    return new Response(
-      JSON.stringify({ error: "No prompt provided" }),
+      JSON.stringify({ error: "Invalid input: Supply a 'prompt' string in the request body." }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 
   try {
-    // Request Gemini
     const gRes = await fetch(ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -51,12 +44,19 @@ serve(async (req) => {
         contents: [{ role: "user", parts: [{ text: prompt }] }],
       }),
     });
-
     const body = await gRes.text();
-    let parsed: any = null;
+
+    let parsed: any;
     try {
       parsed = JSON.parse(body);
-    } catch {}
+    } catch {
+      return new Response(
+        JSON.stringify({ error: "Gemini returned invalid JSON.", raw: body }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Try to get Gemini's answer
     const result =
       parsed?.candidates?.[0]?.content?.parts?.[0]?.text ||
       parsed?.candidates?.[0]?.content?.text ||
@@ -69,12 +69,13 @@ serve(async (req) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-    // Error response with raw details
+
+    // Pass through Gemini error or message
     return new Response(
       JSON.stringify({
-        error: parsed?.error?.message || "Gemini response missing answer",
+        error: parsed?.error?.message || "Gemini returned no answer.",
         status: gRes.status,
-        raw: parsed || body,
+        raw: parsed,
       }),
       { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
