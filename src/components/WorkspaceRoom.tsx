@@ -34,12 +34,12 @@ export default function WorkspaceRoom() {
           {/* Center: Chatbot */}
           <div className="flex-1 min-w-[320px] flex items-center justify-center">
             <div className="w-full flex justify-center">
-              <PixelChatBox />
+              <PixelChatBox taller />
             </div>
           </div>
           {/* Right column */}
-          <div className="flex flex-col gap-4 min-w-[280px] w-[320px] relative">
-            {/* New sidebar panel */}
+          <div className="flex flex-col gap-4 min-w-[320px] w-[340px] relative">
+            {/* New sidebar panel (ALWAYS SHOWS) */}
             <WorkspaceSidebarPanel teamId={undefined as any} />
             {/* Top-right: To Do */}
             <PixelTodo />

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 
 // Minimal ChatMessage type
@@ -7,7 +6,7 @@ type ChatMessage = {
   text: string;
 };
 
-export default function PixelChatBox() {
+export default function PixelChatBox({ taller = false }: { taller?: boolean }) {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([
     { sender: "ai", text: "Hello! Ask me anything ✨" },
@@ -84,16 +83,20 @@ export default function PixelChatBox() {
 
   return (
     <section className="flex flex-col items-center justify-center px-4 py-2 w-full h-full min-w-[320px] max-w-[560px]">
-      <div className="bg-white border border-gray-200 rounded shadow-sm w-full max-w-lg">
+      <div className="bg-[#ffffff] border border-[#badc5b] rounded-xl shadow-lg w-full max-w-lg">
         {/* HEADER */}
-        <div className="bg-green-100 border-b border-gray-200 px-4 py-2 text-green-900 font-bold text-sm rounded-t">
+        <div className="bg-[#e2fde4] border-b border-[#badc5b] px-4 py-2 text-green-900 font-bold text-sm rounded-t pixel-font tracking-widest">
           KIWI Gemini Chat
         </div>
         {/* MESSAGES */}
         <div
           ref={chatBodyRef}
-          className="h-[260px] overflow-y-auto px-4 py-3 flex flex-col gap-3 bg-white"
-          style={{ fontSize: "14px" }}
+          className={`overflow-y-auto px-4 py-3 flex flex-col gap-3 bg-[#fbfff1]`}
+          style={{
+            fontSize: "14px",
+            height: taller ? "450px" : "260px",
+            transition: "height 0.2s"
+          }}
         >
           {messages.map((m, i) => (
             <div
@@ -127,12 +130,12 @@ export default function PixelChatBox() {
         </div>
         {/* INPUT */}
         <form
-          className="flex items-center gap-2 border-t border-gray-200 px-3 py-2 bg-gray-50"
+          className="flex items-center gap-2 border-t border-[#badc5b] px-3 py-2 bg-[#fffbe8]"
           onSubmit={handleSubmit}
         >
           <input
             type="text"
-            className="flex-1 px-2 py-1 border border-gray-200 rounded focus:outline-none focus:ring"
+            className="flex-1 px-2 py-1 border border-gray-200 rounded focus:outline-none focus:ring pixel-font bg-[#f9ffe6]"
             placeholder="Type your question..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -142,7 +145,7 @@ export default function PixelChatBox() {
           />
           <button
             type="submit"
-            className="bg-green-400 hover:bg-green-500 text-white px-3 py-1 rounded disabled:opacity-50"
+            className="bg-[#badc5b] hover:bg-[#d3e8a6] text-[#233f24] px-3 py-1 rounded pixel-font disabled:opacity-50"
             disabled={loading || input.trim().length === 0}
           >
             {loading ? "..." : "Send"}
