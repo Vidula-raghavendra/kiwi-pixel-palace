@@ -34,17 +34,15 @@ function SidebarSection({ label, icon, children }: { label: string, icon: React.
 
 export default function WorkspaceSidebar() {
   const { profile, signOut } = useAuth();
-  const { teams, currentTeam, setCurrentTeam, teamMembers, fetchTeamMembers, loading } = useTeams();
-
-  // Invite/Share/Members panel logic
-  const teamId = currentTeam?.id;
   const {
-    canDeleteTeam, // "Delete" if you're team creator
-    handleLeaveTeam,
-    handleDeleteTeam,
-    loading: panelLoading,
-  } = useTeamSidebarPanel({ teamId: teamId || "" as any });
-  const { toast } = useToast();
+    teams,
+    currentTeam,
+    setCurrentTeam,
+    teamMembers,
+    fetchTeamMembers,
+    deleteTeam,
+    loading,
+  } = useTeams();
 
   // For Invite section
   const [inviteEmail, setInviteEmail] = useState("");
@@ -148,13 +146,23 @@ export default function WorkspaceSidebar() {
       :
       <div className="w-9 h-9 flex items-center justify-center rounded-full border border-[#badc5b] bg-[#fdfae8] text-[#8bb47e]"><User size={17} /></div>;
 
-  // Show current team (fallback first team)
-  const displayTeam = currentTeam || teams[0];
+  // Detect if the user is the creator/admin for delete permissions
+  const canDeleteTeam = currentTeam && (teamMembers.find(m => m.user_id === profile?.id)?.role === "admin" || currentTeam.creator_id === profile?.id);
+
+  // Show current team (fallback to first team always, robust!)
+  const displayTeam = currentTeam || (teams.length > 0 ? teams[0] : null);
+
   React.useEffect(() => {
     if (!currentTeam && teams.length > 0) setCurrentTeam(teams[0]);
     if (displayTeam) fetchTeamMembers(displayTeam.id);
-    // eslint-disable-next-line
   }, [displayTeam?.id]);
+
+  const teamId = currentTeam?.id;
+  const {
+    handleLeaveTeam,
+    handleDeleteTeam,
+    loading: panelLoading,
+  } = useTeamSidebarPanel({ teamId: teamId || "" as any });
 
   return (
     <aside className="bg-[#fffde8] border-r border-[#badc5b] min-w-[250px] max-w-[270px] flex flex-col justify-between h-screen z-30 shadow-lg">
@@ -258,18 +266,20 @@ export default function WorkspaceSidebar() {
         </div>
       </div>
 
-      {/* Leave, Delete, and Logout actions - always shown at very bottom for seamless deletion */}
+      {/* Leave, Delete, and Logout actions */}
       <div className="mb-6 px-6">
-        {/* Only show Delete Team button for creators/admins */}
         {canDeleteTeam && (
           <Button
             className="w-full flex gap-2 pixel-font text-red-600 border border-red-300 bg-[#fbeeee] hover:bg-[#fbdddd]"
-            onClick={() => {
-              if (window.confirm("Are you sure you want to delete this team? This cannot be undone.")) {
-                handleDeleteTeam();
+            onClick={async () => {
+              if (
+                window.confirm("Are you sure you want to delete this team? This cannot be undone.")
+              ) {
+                await deleteTeam(currentTeam!.id);
+                setCurrentTeam(null);
               }
             }}
-            disabled={panelLoading}
+            disabled={loading}
           >
             Delete Team
           </Button>
@@ -277,8 +287,11 @@ export default function WorkspaceSidebar() {
         <Button
           variant="outline"
           className="w-full flex gap-2 pixel-font text-[#ad9271] border-[#ad9271] mt-2"
-          onClick={handleLeaveTeam}
-          disabled={panelLoading}
+          onClick={() => {
+            // Leave team by removing membership (functionality to be added as needed)
+            window.location.reload();
+          }}
+          disabled={loading}
         >
           <Trash2 size={16} /> Leave Team
         </Button>

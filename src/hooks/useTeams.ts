@@ -53,26 +53,41 @@ export const useTeams = () => {
 
   // --- Realtime Team Fetchers/Listeners ---
   useEffect(() => {
-    // Realtime updates for teams where you are a member
     if (!user) return;
+
     const channel = supabaseRef.current
       .channel("teams_members_presence")
+      // TEAM MEMBERSHIP: refetch user's teams if any change for current user
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'team_members', filter: `user_id=eq.${user.id}` },
         (payload) => {
-          // refetch teams if current user affects team_members
           fetchTeams();
         }
       )
+      // TEAM MEMBERS: refetch members if any row changes for current team
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'team_members' },
         (payload) => {
-          // refetch teamMembers if our team is affected
-          if (currentTeam) {
-            fetchTeamMembers(currentTeam.id);
+          if (currentTeam) fetchTeamMembers(currentTeam.id);
+        }
+      )
+      // TEAM DELETED: refetch if current team is deleted
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'teams' },
+        (payload) => {
+          if (currentTeam && payload.old.id === currentTeam.id) {
+            setCurrentTeam(null);
+            setTeams(prevTeams => prevTeams.filter(team => team.id !== currentTeam.id));
+            toast({
+              title: "Team deleted",
+              description: "Your team was deleted.",
+              variant: "destructive"
+            });
           }
+          fetchTeams();
         }
       )
       .subscribe();
@@ -80,19 +95,20 @@ export const useTeams = () => {
     return () => {
       supabaseRef.current.removeChannel(channel);
     };
-    // eslint-disable-next-line
   }, [user, currentTeam?.id]);
 
-  // Make sure teams always reflect up-to-date memberships on login
+  // Always fetch teams after login or team change
   useEffect(() => {
     if (user) fetchTeams();
+    // eslint-disable-next-line
   }, [user]);
 
   useEffect(() => {
     if (currentTeam) fetchTeamMembers(currentTeam.id);
+    else setTeamMembers([]); // Avoid displaying stale data
   }, [currentTeam]);
 
-  // Fix for team join/leave/creation -- setCurrentTeam after fetch
+  // --- Defensive fetchTeams ---
   const fetchTeams = async () => {
     if (!user) return;
     try {
@@ -102,11 +118,15 @@ export const useTeams = () => {
         .select("team_id, teams (*)")
         .eq("user_id", user.id)
         .order("joined_at", { ascending: false });
-      if (error) throw error;
-      const fetchedTeams: Team[] =
-        data?.map((row: any) => row.teams).filter(Boolean) || [];
+
+      if (error) {
+        console.error("Error fetching teams (membership-based):", error);
+        throw error;
+      }
+      const fetchedTeams: Team[] = data?.map((row: any) => row.teams).filter(Boolean) || [];
       setTeams(fetchedTeams);
-      // Keep currentTeam in sync if it's not found in fetchedTeams (ex: just left/deleted)
+
+      // Sync currentTeam: pick the latest unless currentTeam still exists
       if (fetchedTeams.length > 0) {
         if (!currentTeam || !fetchedTeams.some(t => t.id === currentTeam.id)) {
           setCurrentTeam(fetchedTeams[0]);
@@ -115,33 +135,37 @@ export const useTeams = () => {
         setCurrentTeam(null);
       }
     } catch (error: any) {
-      console.error("Error fetching teams (membership-based):", error);
-      toast({
-        title: "Error",
-        description: "Failed to load teams",
-        variant: "destructive",
-      });
       setTeams([]);
       setCurrentTeam(null);
+      toast({
+        title: "Error",
+        description: "Failed to load teams. Try logging in again.",
+        variant: "destructive"
+      });
+      console.error("Error fetching teams (membership-based):", error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Only load team members for current team
+  // --- Defensive fetchTeamMembers ---
   const fetchTeamMembers = async (teamId: string) => {
+    if (!teamId) {
+      setTeamMembers([]);
+      return;
+    }
     try {
       const { data: membersData, error: membersError } = await supabase
         .from("team_members")
         .select("*")
         .eq("team_id", teamId);
+
       if (membersError) throw membersError;
 
       if (!membersData || membersData.length === 0) {
         setTeamMembers([]);
         return;
       }
-
       const userIds = membersData.map((member) => member.user_id);
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
@@ -164,6 +188,32 @@ export const useTeams = () => {
       setTeamMembers(transformedData);
     } catch (error: any) {
       console.error("Error fetching team members:", error);
+      setTeamMembers([]);
+    }
+  };
+
+  // --- Delete team (admin/creator only) ---
+  const deleteTeam = async (teamId: string) => {
+    if (!user) throw new Error("Not authenticated");
+    if (!teamId) throw new Error("No team selected");
+    try {
+      setLoading(true);
+      const { error } = await supabase.from("teams").delete().eq("id", teamId);
+      if (error) throw error;
+      toast({
+        title: "Team Deleted",
+        description: "Team deleted successfully.",
+      });
+      fetchTeams();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete team",
+        variant: "destructive"
+      });
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -335,6 +385,7 @@ export const useTeams = () => {
     joinTeam: joinTeamZoomStyle,
     createProject: createProject,
     fetchTeams,
-    fetchTeamMembers
+    fetchTeamMembers,
+    deleteTeam,
   };
 };
