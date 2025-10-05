@@ -1,10 +1,9 @@
+@import url('./components/pixel/PixelFont.css');
+@import url('./components/pixel/PixelCursor.css');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('./components/pixel/PixelFont.css');
-@import url('./components/pixel/PixelCursor.css');
 #commit 
 /* Add pixel global tweaks for outline and no anti-aliasing on text, default backgrounds */
 body, html {

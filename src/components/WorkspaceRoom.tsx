@@ -80,28 +80,47 @@ export default function WorkspaceRoom() {
   const displayTeam = currentTeam || teams[0];
 
   return (
-    <div className="relative w-full min-h-screen bg-[#e2fde4] flex flex-row">
+    <div className="relative w-full min-h-screen bg-gradient-to-br from-[#e2fde4] via-[#f0ffe8] to-[#fff7ea] flex flex-row">
       <WorkspaceSidebar />
-      <div className="flex-1 flex flex-col items-center justify-start py-5 px-2">
-        <div className="w-full max-w-4xl flex flex-row items-start justify-end mb-3">
+      <div className="flex-1 flex flex-col items-center justify-start py-6 px-4">
+        <div className="w-full max-w-6xl flex flex-row items-center justify-between mb-6">
+          <div className="pixel-font text-3xl text-[#233f24] font-bold">
+            {displayTeam.name}
+          </div>
           <Button
             variant="secondary"
-            className="pixel-font text-[#233f24] flex flex-row items-center gap-2 px-5 py-2 border-[#233f24] border-2 rounded-lg shadow-[0_2px_0_#ad9271] hover:brightness-95 hover:scale-105 transition-all ml-3"
+            className="pixel-font text-[#233f24] bg-[#fffdf3] hover:bg-[#fff7ea] flex flex-row items-center gap-2 px-6 py-3 border-[#233f24] border-4 shadow-[0_4px_0_#ad9271] hover:shadow-[0_6px_0_#ad9271] hover:translate-y-[-2px] transition-all"
             onClick={() => navigate("/home")}
           >
-            <ArrowLeft className="mr-1" size={20} />
-            Back to Home
+            <ArrowLeft size={20} />
+            Back to Dashboard
           </Button>
         </div>
-        <div className="w-full max-w-5xl flex-1 flex flex-col md:flex-row gap-6 items-start justify-center">
-          <div className="flex-1 min-w-[320px] flex items-center justify-center">
-            <div className="w-full flex justify-center">
+        <div className="w-full max-w-6xl flex-1 flex flex-col lg:flex-row gap-6 items-start">
+          <div className="flex-1 min-w-[320px]">
+            <div className="bg-[#fffdf3] border-4 border-[#233f24] shadow-[0_6px_0_#ad9271] p-1">
+              <div className="pixel-font text-lg text-[#233f24] bg-[#badc5b] border-b-4 border-[#233f24] px-4 py-3 flex items-center gap-2">
+                <span className="text-2xl">&#x1F916;</span>
+                <span>AI Assistant Chat</span>
+              </div>
               <PixelChatBox taller />
             </div>
           </div>
-          <div className="flex flex-col gap-4 min-w-[320px] w-[340px] relative">
-            <PixelTodo />
-            <PixelChatRoom team={displayTeam} />
+          <div className="flex flex-col gap-6 min-w-[320px] w-full lg:w-[380px]">
+            <div className="bg-[#fff7ea] border-4 border-[#233f24] shadow-[0_6px_0_#ad9271] p-1">
+              <div className="pixel-font text-lg text-[#233f24] bg-[#f59e42] border-b-4 border-[#233f24] px-4 py-3 flex items-center gap-2">
+                <span className="text-2xl">&#x2705;</span>
+                <span>Team To-Do</span>
+              </div>
+              <PixelTodo />
+            </div>
+            <div className="bg-[#f0ffe8] border-4 border-[#233f24] shadow-[0_6px_0_#ad9271] p-1">
+              <div className="pixel-font text-lg text-[#233f24] bg-[#8bb47e] border-b-4 border-[#233f24] px-4 py-3 flex items-center gap-2">
+                <span className="text-2xl">&#x1F4AC;</span>
+                <span>Team Chat</span>
+              </div>
+              <PixelChatRoom team={displayTeam} />
+            </div>
           </div>
         </div>
       </div>

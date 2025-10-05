@@ -9,7 +9,7 @@ import { CopyCheck, Copy, LogOut, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const statCard =
-  "flex flex-col items-center justify-center bg-[#fffdf3] border-2 border-[#ad9271] rounded-lg shadow-[0_2px_0_#ad9271] px-6 py-4 min-w-[120px] min-h-[88px] pixel-font font-semibold text-lg text-[#233f24]";
+  "flex flex-col items-center justify-center bg-[#fffdf3] border-4 border-[#233f24] shadow-[0_4px_0_#ad9271] hover:shadow-[0_6px_0_#ad9271] hover:translate-y-[-2px] transition-all px-8 py-6 min-w-[140px] min-h-[110px] pixel-font font-semibold text-lg text-[#233f24]";
 
 /** Invite Modal shown after creating a new team/project */
 function InviteModal({
@@ -247,25 +247,27 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <div className="w-full h-full flex flex-col items-center py-10 gap-8 animate-fade-in">
-      <div className="flex items-center justify-between w-full max-w-[640px] relative">
-        <div className="text-3xl pixel-font text-[#233f24] text-center">
-          Welcome, {displayName}!
+    <div className="w-full h-full flex flex-col items-center py-12 gap-10 animate-fade-in bg-gradient-to-br from-[#e2fde4] via-[#f0ffe8] to-[#fff7ea] min-h-screen">
+      <div className="flex flex-col md:flex-row items-center justify-between w-full max-w-5xl px-4 gap-4">
+        <div className="text-center md:text-left">
+          <div className="text-4xl md:text-5xl pixel-font text-[#233f24] mb-2 drop-shadow-[2px_2px_0_rgba(186,220,91,0.3)]">
+            Welcome back, {displayName}!
+          </div>
+          <p className="pixel-font text-[#7b6449] text-lg">Ready to build something amazing today?</p>
         </div>
-        <div className="flex items-center gap-2 absolute right-0 top-1">
+        <div className="flex items-center gap-3">
           <Button
             onClick={() => setCreateOpen(true)}
-            className="pixel-font bg-[#8bb47e] hover:bg-[#badc5b] flex items-center gap-1 text-[#233f24] px-3 text-sm rounded"
+            className="pixel-font bg-[#badc5b] hover:bg-[#8bb47e] border-4 border-[#233f24] shadow-[0_4px_0_#233f24] hover:shadow-[0_6px_0_#233f24] hover:translate-y-[-2px] transition-all flex items-center gap-2 text-[#233f24] px-5 py-6 text-lg"
           >
-            <Plus size={17} /> Create Team
+            <Plus size={20} /> New Team
           </Button>
           <Button
             onClick={signOut}
             variant="outline"
-            size="sm"
-            className="pixel-font text-[#233f24] border-[#ad9271] flex items-center gap-2"
+            className="pixel-font text-[#233f24] border-4 border-[#ad9271] bg-[#fffdf3] hover:bg-[#fff7ea] shadow-[0_4px_0_#ad9271] hover:shadow-[0_6px_0_#ad9271] hover:translate-y-[-2px] transition-all flex items-center gap-2 px-5 py-6 text-lg"
           >
-            <LogOut size={16} />
+            <LogOut size={18} />
             Sign Out
           </Button>
         </div>
@@ -281,41 +283,54 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
-      <div className="w-full max-w-[640px] flex flex-row flex-wrap gap-4 justify-center">
-        <div className={statCard}>
-          <span className="text-2xl text-[#ad9271]">&#x2764;&#xFE0F; 3</span>
-          <span className="mt-2 text-[#7b6449]">Lives left</span>
-        </div>
-        <div className={statCard}>
-          <span className="text-2xl text-[#8bb47e]">&#x1F4B0; 1024</span>
-          <span className="mt-2 text-[#7b6449]">Pixel Coins</span>
-        </div>
-        <div className={statCard}>
-          <span className="text-2xl text-[#badc5b]">&#x1F3AE;</span>
-          <span className="mt-2 text-[#7b6449]">Quests Completed: 7</span>
+      <div className="w-full max-w-5xl px-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className={statCard}>
+            <div className="text-4xl mb-2">&#x2764;&#xFE0F;</div>
+            <span className="text-3xl text-[#f59e42] font-bold">3</span>
+            <span className="mt-2 text-[#7b6449] text-sm">Active Teammates</span>
+          </div>
+          <div className={statCard}>
+            <div className="text-4xl mb-2">&#x1F4B0;</div>
+            <span className="text-3xl text-[#badc5b] font-bold">1,024</span>
+            <span className="mt-2 text-[#7b6449] text-sm">Messages Sent</span>
+          </div>
+          <div className={statCard}>
+            <div className="text-4xl mb-2">&#x1F3AE;</div>
+            <span className="text-3xl text-[#8bb47e] font-bold">7</span>
+            <span className="mt-2 text-[#7b6449] text-sm">Projects Completed</span>
+          </div>
         </div>
       </div>
 
       {/* Existing teams */}
       {teams && teams.length > 0 && (
-        <div className="w-full max-w-2xl">
-          <div className="pixel-font text-lg mb-3 text-[#233f24]">
-            Your Workspaces:
+        <div className="w-full max-w-5xl px-4">
+          <div className="pixel-font text-2xl mb-6 text-[#233f24]">
+            &#x1F4BC; Your Workspaces
           </div>
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {teams.map((team) => (
-              <div key={team.id} className="flex items-center justify-between p-4 bg-[#f7ffe1] rounded-lg border border-[#badc5b]">
-                <div>
-                  <div className="pixel-font text-[#233f24] font-semibold">{team.name}</div>
-                  {team.description && (
-                    <div className="text-sm text-[#8bb47e]">{team.description}</div>
-                  )}
+              <div key={team.id} className="bg-[#fffdf3] border-4 border-[#233f24] p-6 shadow-[0_4px_0_#ad9271] hover:shadow-[0_6px_0_#ad9271] hover:translate-y-[-2px] transition-all group">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <div className="pixel-font text-xl text-[#233f24] font-bold mb-2">{team.name}</div>
+                    {team.description && (
+                      <div className="pixel-font text-sm text-[#7b6449] mb-3">{team.description}</div>
+                    )}
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="bg-[#badc5b] border-2 border-[#233f24] px-2 py-1 pixel-font text-[#233f24]">
+                        {team.invite_code}
+                      </span>
+                      <span className="pixel-font text-[#ad9271]">Invite Code</span>
+                    </div>
+                  </div>
                 </div>
-                <Button 
+                <Button
                   onClick={() => navigate(`/workspace/${team.id}`)}
-                  className="pixel-font bg-[#8bb47e] hover:bg-[#92c993] text-[#233f24]"
+                  className="w-full pixel-font bg-[#8bb47e] hover:bg-[#badc5b] border-2 border-[#233f24] text-[#233f24] py-3 shadow-[0_2px_0_#233f24] hover:shadow-[0_4px_0_#233f24] hover:translate-y-[-2px] transition-all"
                 >
-                  Enter Workspace
+                  &#x26A1; Enter Workspace
                 </Button>
               </div>
             ))}
@@ -324,10 +339,10 @@ const Dashboard: React.FC = () => {
       )}
 
       {/* Start a new project */}
-      <div className="w-full max-w-lg mt-12 mb-8 p-10 rounded-lg border-2 border-[#ad9271] bg-[#fffdf3] shadow-[0_2px_0_#ad9271] flex flex-col items-center gap-4"
-        style={{ minHeight: 310, justifyContent: "center" }}
+      <div className="w-full max-w-2xl px-4 mt-12 mb-8 p-12 border-4 border-[#233f24] bg-gradient-to-br from-[#badc5b] to-[#8bb47e] shadow-[0_6px_0_#233f24] flex flex-col items-center gap-6"
       >
-        <div className="pixel-font text-2xl mb-4 text-[#233f24]">Start a New Project</div>
+        <div className="pixel-font text-3xl mb-2 text-[#233f24] text-center">Create Your First Workspace</div>
+        <p className="pixel-font text-[#233f24] text-center mb-2">Start collaborating with your team in minutes</p>
         <form onSubmit={handleCreateTeam} className="flex flex-col gap-5 w-full items-center">
           <Input
             className="pixel-font text-lg px-5 py-3"
@@ -369,14 +384,26 @@ const Dashboard: React.FC = () => {
         />
       </div>
 
-      <div className="mt-6 pixel-font text-[#8bb47e] text-center">
-        <div className="text-lg mb-1">Your recent activity</div>
-        <div className="bg-[#fffdf3] border-2 border-[#ad9271] rounded-lg px-6 py-3 shadow-[0_2px_0_#ad9271] max-w-[440px] text-[#232b1b]">
-          <ul className="list-disc ml-6 text-left text-base">
-            <li>Signed in with GitHub</li>
-            <li>Accessed Dashboard</li>
-            <li>Ready to collaborate!</li>
-          </ul>
+      <div className="w-full max-w-5xl px-4 mt-8">
+        <div className="bg-[#fff7ea] border-4 border-[#233f24] p-8 shadow-[0_4px_0_#ad9271]">
+          <div className="pixel-font text-xl text-[#233f24] mb-4">&#x2728; Recent Activity</div>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 pixel-font text-[#7b6449]">
+              <div className="w-3 h-3 bg-[#8bb47e] border-2 border-[#233f24]"></div>
+              <span>Signed in with GitHub</span>
+              <span className="text-xs text-[#ad9271] ml-auto">Just now</span>
+            </div>
+            <div className="flex items-center gap-3 pixel-font text-[#7b6449]">
+              <div className="w-3 h-3 bg-[#badc5b] border-2 border-[#233f24]"></div>
+              <span>Accessed Dashboard</span>
+              <span className="text-xs text-[#ad9271] ml-auto">1 min ago</span>
+            </div>
+            <div className="flex items-center gap-3 pixel-font text-[#7b6449]">
+              <div className="w-3 h-3 bg-[#f59e42] border-2 border-[#233f24]"></div>
+              <span>Ready to collaborate!</span>
+              <span className="text-xs text-[#ad9271] ml-auto">Now</span>
+            </div>
+          </div>
         </div>
       </div>
       

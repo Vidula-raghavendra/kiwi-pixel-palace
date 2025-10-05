@@ -33,24 +33,26 @@ export default function WorkspacePage() {
   // Refactored cards for clarity: Join Room & Create Room
   function renderMainActions() {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-lg mx-auto mb-9">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-3xl mx-auto mb-9">
         <button
-          className="bg-[#badc5b] hover:bg-[#b6e879] border-2 border-[#ad9271] rounded-lg p-6 text-xl font-bold pixel-font text-[#233f24] shadow-[0_2px_0_#ad9271] transition hover:scale-105"
+          className="bg-gradient-to-br from-[#badc5b] to-[#8bb47e] hover:from-[#8bb47e] hover:to-[#badc5b] border-4 border-[#233f24] p-8 text-2xl font-bold pixel-font text-[#233f24] shadow-[0_6px_0_#233f24] transition hover:shadow-[0_8px_0_#233f24] hover:translate-y-[-2px] group"
           onClick={() => handleCard("project")}
           data-testid="join-room-btn"
         >
+          <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">&#x1F511;</div>
           Join a Room
-          <div className="text-base font-normal text-[#7b6449] mt-2">
+          <div className="text-base font-normal text-[#233f24] mt-3 leading-relaxed">
             Enter an invite code to join a team instantly
           </div>
         </button>
         <button
-          className="bg-[#8bb47e] hover:bg-[#93c88e] border-2 border-[#ad9271] rounded-lg p-6 text-xl font-bold pixel-font text-[#233f24] shadow-[0_2px_0_#ad9271] transition hover:scale-105"
+          className="bg-gradient-to-br from-[#8bb47e] to-[#badc5b] hover:from-[#badc5b] hover:to-[#8bb47e] border-4 border-[#233f24] p-8 text-2xl font-bold pixel-font text-[#233f24] shadow-[0_6px_0_#233f24] transition hover:shadow-[0_8px_0_#233f24] hover:translate-y-[-2px] group"
           onClick={() => handleCard("team")}
           data-testid="create-room-btn"
         >
+          <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">&#x2728;</div>
           Create a Room
-          <div className="text-base font-normal text-[#7b6449] mt-2">
+          <div className="text-base font-normal text-[#233f24] mt-3 leading-relaxed">
             Start a fresh team and get an instant invite link to share
           </div>
         </button>
@@ -115,37 +117,45 @@ export default function WorkspacePage() {
   if (teams && teams.length > 0) {
     return (
       <SidebarProvider>
-        <div className="relative min-h-screen w-full flex flex-col items-center justify-center bg-[#e2fde4] overflow-x-auto">
-          <main className="flex-1 flex flex-col items-center justify-center py-16 min-w-0">
-            <div className="max-w-2xl w-full text-center">
-              <div className="pixel-font text-2xl text-[#233f24] mb-6">
-                Welcome back, <span className="text-[#8bb47e]">{userName}</span>!
+        <div className="relative min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-[#e2fde4] via-[#f0ffe8] to-[#fff7ea] overflow-x-auto">
+          <main className="flex-1 flex flex-col items-center justify-center py-16 px-4 min-w-0">
+            <div className="max-w-4xl w-full">
+              <div className="text-center mb-10">
+                <div className="pixel-font text-4xl md:text-5xl text-[#233f24] mb-3 drop-shadow-[2px_2px_0_rgba(186,220,91,0.3)]">
+                  Welcome back, <span className="text-[#8bb47e]">{userName}</span>!
+                </div>
+                <p className="pixel-font text-[#7b6449] text-lg">You're part of {teams.length} awesome team{teams.length > 1 ? 's' : ''}</p>
               </div>
-              
-              <div className="space-y-4 mb-8">
-                <p className="pixel-font text-[#233f24]">You're already part of {teams.length} team{teams.length > 1 ? 's' : ''}:</p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
                 {teams.map((team) => (
-                  <div key={team.id} className="flex items-center justify-between p-4 bg-[#f7ffe1] rounded-lg border border-[#badc5b]">
-                    <div>
-                      <div className="pixel-font text-[#233f24] font-semibold">{team.name}</div>
+                  <div key={team.id} className="bg-[#fffdf3] border-4 border-[#233f24] p-6 shadow-[0_4px_0_#ad9271] hover:shadow-[0_6px_0_#ad9271] hover:translate-y-[-2px] transition-all group">
+                    <div className="mb-4">
+                      <div className="pixel-font text-2xl text-[#233f24] font-bold mb-2">{team.name}</div>
                       {team.description && (
-                        <div className="text-sm text-[#8bb47e]">{team.description}</div>
+                        <div className="pixel-font text-sm text-[#7b6449] mb-3">{team.description}</div>
                       )}
-                      <div className="text-xs mt-2">
-                        Invite code to join:&nbsp;
-                        <span className="bg-[#e2fde4] p-0.5 rounded font-mono">{team.invite_code}</span>
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="bg-[#badc5b] border-2 border-[#233f24] px-2 py-1 pixel-font text-[#233f24] font-mono">
+                          {team.invite_code}
+                        </span>
+                        <span className="pixel-font text-[#ad9271]">Invite Code</span>
                       </div>
                     </div>
-                    <Button 
+                    <Button
                       onClick={() => navigate(`/workspace/${team.id}`)}
-                      className="pixel-font bg-[#8bb47e] hover:bg-[#92c993] text-[#233f24]"
+                      className="w-full pixel-font bg-[#8bb47e] hover:bg-[#badc5b] border-2 border-[#233f24] text-[#233f24] py-3 shadow-[0_2px_0_#233f24] hover:shadow-[0_4px_0_#233f24] hover:translate-y-[-2px] transition-all text-lg"
                     >
-                      Enter Workspace
+                      &#x26A1; Enter Workspace
                     </Button>
                   </div>
                 ))}
               </div>
 
+              <div className="text-center mb-6">
+                <div className="pixel-font text-2xl text-[#233f24] mb-2">Want to do more?</div>
+                <p className="pixel-font text-[#7b6449]">Join another team or create a new workspace</p>
+              </div>
               {renderMainActions()}
             </div>
           </main>
@@ -168,16 +178,44 @@ export default function WorkspacePage() {
   // If no teams, default onboarding with join/create room options
   return (
     <SidebarProvider>
-      <div className="relative min-h-screen w-full flex flex-col items-center justify-center bg-[#e2fde4] overflow-x-auto">
-        <main className="flex-1 flex flex-col items-center justify-center py-16 min-w-0">
-          <div className="max-w-2xl w-full">
-            <div className="pixel-font text-2xl text-[#233f24] mb-6">
-              Welcome, <span className="text-[#8bb47e]">{userName}</span>!
-            </div>
-            <div className="pixel-font text-[#233f24] mb-8">
-              Get started by joining an existing team or creating a new one:
+      <div className="relative min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-[#e2fde4] via-[#f0ffe8] to-[#fff7ea] overflow-x-auto">
+        <main className="flex-1 flex flex-col items-center justify-center py-16 px-4 min-w-0">
+          <div className="max-w-4xl w-full text-center">
+            <div className="mb-10">
+              <div className="inline-block mb-6">
+                <div className="w-24 h-24 bg-[#badc5b] border-4 border-[#233f24] flex items-center justify-center shadow-[0_6px_0_#233f24] animate-bounce">
+                  <span className="text-5xl">&#x1F44B;</span>
+                </div>
+              </div>
+              <div className="pixel-font text-4xl md:text-5xl text-[#233f24] mb-4 drop-shadow-[2px_2px_0_rgba(186,220,91,0.3)]">
+                Welcome, <span className="text-[#8bb47e]">{userName}</span>!
+              </div>
+              <div className="pixel-font text-[#7b6449] text-xl mb-6 max-w-2xl mx-auto">
+                Get started by joining an existing team or creating your own workspace.
+              </div>
             </div>
             {renderMainActions()}
+            <div className="mt-12 bg-[#fff7ea] border-4 border-[#233f24] p-8 shadow-[0_4px_0_#ad9271] max-w-2xl mx-auto">
+              <div className="pixel-font text-lg text-[#233f24] mb-4">&#x2728; What you can do with KIWI:</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                <div className="flex items-start gap-2">
+                  <span className="text-[#8bb47e] flex-shrink-0">&#x2713;</span>
+                  <span className="pixel-font text-sm text-[#7b6449]">Collaborate with AI assistants</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-[#8bb47e] flex-shrink-0">&#x2713;</span>
+                  <span className="pixel-font text-sm text-[#7b6449]">Real-time team chat</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-[#8bb47e] flex-shrink-0">&#x2713;</span>
+                  <span className="pixel-font text-sm text-[#7b6449]">Manage tasks together</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-[#8bb47e] flex-shrink-0">&#x2713;</span>
+                  <span className="pixel-font text-sm text-[#7b6449]">Share code snippets instantly</span>
+                </div>
+              </div>
+            </div>
           </div>
         </main>
         <TeamModals

@@ -1,156 +1,261 @@
-Kiwi – Team Collaboration Web App
-Kiwi is a playful, pixel-art inspired, AI-powered team collaboration platform. It combines robust team management, real-time chat, dual LLM assistants, and a unique blend of soft 3D and pixel UI, all built on a modern stack with Supabase and React.
+# KIWI Team
 
-Features
-Authentication: OAuth via GitHub and Google, session management, and auto-profile fetch (Supabase Auth)
+A delightful, pixel-art inspired team collaboration platform that combines AI-powered assistance with real-time teamwork. Built for developers who want powerful features wrapped in a joyful, retro gaming aesthetic.
 
-Team Collaboration:
+## What is KIWI Team?
 
-Create teams, join via code, or invite members by email/GitHub
+KIWI Team transforms team collaboration into an engaging experience. It's a modern workspace where you can:
 
-Unique team codes for easy onboarding
+- **Collaborate with Dual AI Assistants**: Chat with two AI models simultaneously and compare responses in real-time
+- **Work Together Seamlessly**: Create instant workspaces with shareable invite codes
+- **Stay Organized**: Track tasks with built-in to-do lists for each workspace
+- **Chat in Real-Time**: Team messaging with presence indicators
+- **Enjoy the Journey**: Pixel-art UI inspired by classic games makes work feel like play
 
-Member roles (admin, viewer, etc.)
+## Key Features
 
-Real-time updates via Supabase listeners
+### 🤖 Dual AI Chat System
+Two AI assistants (Gemini & GPT) in every workspace. Compare responses side-by-side, drag conversations between panels, and get the best answers faster.
 
-Dual LLM Chat System:
+### 👥 Instant Team Workspaces
+- Create teams in seconds with auto-generated invite codes
+- Share codes with teammates for instant access
+- GitHub OAuth for secure, one-click authentication
+- Real-time presence indicators show who's online
 
-Each workspace offers two AI assistants (Gemini, GPT, or both)
+### ✅ Collaborative Task Management
+Built-in to-do lists for each workspace help teams stay organized and aligned on priorities.
 
-Real-time, side-by-side chat panels for each user
+### 💬 Real-Time Team Chat
+Dedicated chat room for each workspace with message history and typing indicators.
 
-Drag-to-clone conversation threads between panels
+### 🎨 Pixel-Perfect Design
+- Retro pixel-art aesthetic with modern UI/UX
+- Smooth animations and transitions
+- Responsive design works on all devices
+- Custom mascot characters for guidance and delight
 
-Pixel Art + Soft 3D Design:
+### 🔒 Secure by Default
+- GitHub OAuth authentication
+- Row Level Security (RLS) in Supabase
+- Encrypted data storage
+- No passwords to manage
 
-Responsive layout, mascot animation, animated modals (Framer Motion)
+## Tech Stack
 
-Sidebar with team info and actions
+- **Frontend**: React 18, TypeScript, Vite
+- **Styling**: TailwindCSS with custom pixel-art theme
+- **UI Components**: shadcn/ui, Radix UI
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth with GitHub OAuth
+- **AI Integration**: Google Gemini API (via Supabase Edge Functions)
+- **Real-Time**: Supabase Realtime subscriptions
+- **State Management**: React Context + Custom Hooks
+- **Routing**: React Router v6
+- **Animations**: Framer Motion, CSS animations
 
-To-do panel for workspace notes (basic CRUD)
+## Project Structure
 
-Extra Features:
+```
+src/
+├── api/                    # API integration modules
+├── components/            # React components
+│   ├── auth/             # Authentication components
+│   ├── pixel/            # Pixel-art UI components
+│   └── ui/               # Reusable UI components (shadcn/ui)
+├── contexts/             # React contexts (Auth, etc.)
+├── hooks/                # Custom React hooks
+├── integrations/         # Third-party integrations
+│   └── supabase/        # Supabase client & types
+├── lib/                  # Utility functions
+└── pages/                # Page components (routing)
 
-Export chat as PDF
+supabase/
+├── functions/            # Edge Functions for AI chat
+└── migrations/           # Database migrations
+```
 
-Dark mode toggle
+## Getting Started
 
-Custom workspace themes
+### Prerequisites
 
-404 and loading screens with mascot and pixel effects
+- Node.js 18+ or Bun
+- A Supabase account
+- GitHub OAuth app credentials
 
-Tech Stack
-Frontend: React, TailwindCSS, Framer Motion, ShadCN, Zustand (or Redux)
+### Installation
 
-Backend: Node.js + Express or Supabase Edge Functions
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url>
+   cd kiwi-team
+   ```
 
-Database: Supabase (PostgreSQL)
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or
+   bun install
+   ```
 
-Auth: Supabase Auth (OAuth)
+3. **Set up environment variables**
 
-LLM Integration: Google Gemini & OpenAI GPT APIs
+   The `.env` file should already contain your Supabase credentials. Verify these values:
+   ```env
+   VITE_SUPABASE_URL=your_supabase_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
 
-UI: Pixel art & soft 3D, custom mascot (Lottie/Storyblocks)
+4. **Configure GitHub OAuth**
 
-Pages & Routing
-/ – Animated landing page with mascot and call-to-action
+   In your Supabase dashboard:
+   - Go to Authentication → Providers
+   - Enable GitHub provider
+   - Add your GitHub OAuth credentials
+   - Set redirect URLs:
+     - `http://localhost:5173` (development)
+     - Your production domain
 
-/login – OAuth login (GitHub, Google)
+5. **Database is Ready**
 
-/signup – Optional email/password signup
+   Your Supabase database is already provisioned with all necessary tables and security policies.
 
-/home – User dashboard: create/join/invite teams
+6. **Start the development server**
+   ```bash
+   npm run dev
+   ```
 
-/workspace/:teamId – Main team workspace: chat, to-dos, sidebar
+   Visit `http://localhost:5173`
 
-* – Custom 404 pixel-art error page
+## Database Schema
 
-Database Schema (Supabase)
-users: id, email, github_id, name, avatar
+### Core Tables
 
-teams: id, name, team_code, created_by
+- **teams**: Workspace/team information
+  - `id`, `name`, `description`, `invite_code`, `created_by`, `created_at`
 
-team_members: id, team_id, user_id, role
+- **team_members**: Team membership tracking
+  - `id`, `team_id`, `user_id`, `role`, `joined_at`
 
-invites: id, team_id, email/github, status
+- **messages**: Team chat messages
+  - `id`, `team_id`, `user_id`, `content`, `created_at`
 
-messages: id, user_id, llm_type, team_id, message, timestamp
+- **todos**: Task management
+  - `id`, `team_id`, `content`, `completed`, `created_by`, `created_at`
 
-Setup & Installation
-Prerequisites
-Node.js (v18+ recommended)
+- **ai_chats**: AI conversation history
+  - `id`, `user_id`, `team_id`, `model`, `messages`, `created_at`
 
-Supabase account & project
+All tables have Row Level Security (RLS) enabled with appropriate policies for team-based access control.
 
-API keys for Gemini and OpenAI (optional, for AI chat)
+## Available Scripts
 
-1. Clone the Repository
-bash
-Copy
-Edit
-git clone https://github.com/yourusername/kiwi-collab.git
-cd kiwi-collab
-2. Install Dependencies
-bash
-Copy
-Edit
-npm install
-3. Environment Variables
-Create a .env file based on .env.example:
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
 
-ini
-Copy
-Edit
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_anon_key
-VITE_OPENAI_API_KEY=your_openai_key
-VITE_GEMINI_API_KEY=your_gemini_key
-4. Configure Supabase
-Set up the database schema (see above).
+## Key User Flows
 
-Enable Auth providers (GitHub, Google) in Supabase Dashboard.
+### First-Time User
+1. Land on homepage → See features and benefits
+2. Click "Get Started" → GitHub OAuth authentication
+3. Redirect to dashboard → See welcome message
+4. Choose to create a team or join with invite code
+5. Enter workspace → Start collaborating!
 
-Add your site and local URLs as Auth redirect URIs.
+### Creating a Team
+1. Click "Create a Room" or "New Team"
+2. Enter team name and optional description
+3. Team is created with unique invite code
+4. Share code with teammates
+5. Start using workspace immediately
 
-5. Run the App
-bash
-Copy
-Edit
-npm run dev
-Visit http://localhost:5173 in your browser.
+### Joining a Team
+1. Get invite code from a teammate
+2. Click "Join a Room"
+3. Enter the invite code
+4. Instantly added to team workspace
+5. Access all team features
 
-6. Deploy
-Deploy to Vercel or Netlify for production.
+### Using the Workspace
+1. **AI Chat**: Ask questions, get code help, compare AI responses
+2. **Team Chat**: Communicate with teammates in real-time
+3. **To-Do List**: Create and manage tasks collaboratively
+4. **Sidebar**: Access team settings, members, and quick actions
 
-Customization
-Update mascot animations and backgrounds in public/assets or via Lottie/Storyblocks links.
+## Design Philosophy
 
-To add more LLMs, configure API endpoints in the backend and adjust the workspace UI as needed.
+KIWI Team follows these design principles:
 
-Edit Tailwind config and pixel/3D styles in /src/styles for branding.
+1. **Joyful by Default**: Work should be enjoyable. Pixel art and playful interactions create delight.
 
-Assets
-Mascot and loading animations: Use Lottie or Storyblocks, or customize in /public/assets.
+2. **Clarity Over Complexity**: Clear visual hierarchy, obvious actions, minimal cognitive load.
 
-Pixel textures: Place under /public/assets/pixels and reference in Tailwind/JSX.
+3. **Fast & Responsive**: Instant feedback, smooth animations, optimistic UI updates.
 
-Contributing
-Fork this repo
+4. **Team-First**: Every feature designed for collaboration, not solo work.
 
-Create your feature branch (git checkout -b feature/your-feature)
+5. **No Barriers**: One-click auth, instant workspaces, no setup friction.
 
-Commit your changes (git commit -am 'Add new feature')
+## Security & Privacy
 
-Push to the branch (git push origin feature/your-feature)
+- All user data encrypted at rest in Supabase
+- GitHub OAuth for secure authentication
+- Row Level Security prevents unauthorized access
+- Team data isolated with Supabase RLS policies
+- No third-party tracking or analytics
+- AI conversations can be deleted anytime
 
-Open a pull request
+## Contributing
 
-License
-MIT
+We welcome contributions! Here's how:
 
-Credits
-Pixel and mascot art via Storyblocks or custom Lottie
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Commit with clear messages (`git commit -m 'Add amazing feature'`)
+5. Push to your branch (`git push origin feature/amazing-feature`)
+6. Open a Pull Request
 
-Powered by Supabase, , Google Gemini
+Please ensure:
+- Code follows the existing style
+- All components use TypeScript
+- UI matches the pixel-art theme
+- New features have appropriate RLS policies
 
+## Roadmap
+
+Upcoming features:
+- [ ] Voice chat rooms
+- [ ] Screen sharing for pair programming
+- [ ] Code snippet sharing with syntax highlighting
+- [ ] Workspace themes and customization
+- [ ] Mobile app (React Native)
+- [ ] Integration with GitHub repositories
+- [ ] Calendar and scheduling
+- [ ] File sharing and storage
+
+## License
+
+MIT License - see LICENSE file for details
+
+## Credits
+
+- Pixel art inspiration from classic 8-bit and 16-bit games
+- UI components from [shadcn/ui](https://ui.shadcn.com/)
+- Icons from [Lucide](https://lucide.dev/)
+- Powered by [Supabase](https://supabase.com/)
+- AI by [Google Gemini](https://deepmind.google/technologies/gemini/)
+
+## Support
+
+Need help? Found a bug?
+
+- Open an issue on GitHub
+- Check existing issues for solutions
+- Review documentation in `/docs`
+
+---
+
+Built with ❤️ by the KIWI Team
