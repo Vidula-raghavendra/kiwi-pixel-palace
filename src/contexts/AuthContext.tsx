@@ -9,7 +9,8 @@ interface AuthContextType {
   session: Session | null;
   profile: any | null;
   loading: boolean;
-  signInWithGithub: () => Promise<void>;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (data: any) => Promise<void>;
 }
@@ -96,28 +97,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signInWithGithub = async () => {
+  const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'github',
-        options: {
-          redirectTo: `${window.location.origin}/home`
-        }
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password
       });
-      
+
       if (error) {
         toast({
           title: "Authentication Error",
           description: error.message,
           variant: "destructive"
         });
+        throw error;
       }
     } catch (error: any) {
       toast({
         title: "Authentication Error",
-        description: error.message || "Failed to sign in with GitHub",
+        description: error.message || "Failed to sign in",
         variant: "destructive"
       });
+      throw error;
+    }
+  };
+
+  const signUp = async (email: string, password: string) => {
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password
+      });
+
+      if (error) {
+        toast({
+          title: "Sign Up Error",
+          description: error.message,
+          variant: "destructive"
+        });
+        throw error;
+      }
+
+      toast({
+        title: "Account Created",
+        description: "You can now sign in with your credentials",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Sign Up Error",
+        description: error.message || "Failed to create account",
+        variant: "destructive"
+      });
+      throw error;
     }
   };
 
@@ -170,7 +201,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     session,
     profile,
     loading,
-    signInWithGithub,
+    signIn,
+    signUp,
     signOut,
     updateProfile
   };

@@ -1,9 +1,9 @@
-
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function SignupForm() {
   const [email, setEmail] = useState("");
@@ -11,6 +11,8 @@ export default function SignupForm() {
   const [pw2, setPw2] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { signUp } = useAuth();
 
   function validate() {
     if (!email) return "Email required";
@@ -21,15 +23,21 @@ export default function SignupForm() {
     return "";
   }
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const v = validate();
     if (v) return setError(v);
     setLoading(true);
-    setTimeout(() => {
-      setError("Signup is just a demo! (enable auth to use)");
+    setError("");
+
+    try {
+      await signUp(email, pw);
+      navigate("/login");
+    } catch (err: any) {
+      setError(err.message || "Failed to create account");
+    } finally {
       setLoading(false);
-    }, 700);
+    }
   };
 
   return (

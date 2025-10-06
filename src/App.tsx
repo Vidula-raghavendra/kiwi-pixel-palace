@@ -12,6 +12,8 @@ import Dashboard from "./components/Dashboard";
 import WorkspacePage from "./pages/WorkspacePage";
 import WorkspaceRoom from "./components/WorkspaceRoom";
 import AuthPage from "./pages/AuthPage";
+import LoginForm from "./components/auth/LoginForm";
+import SignupForm from "./components/auth/SignupForm";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -83,7 +85,11 @@ const App = () => (
               <Route path="/" element={<LandingPage />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/login" element={<AuthPage />} />
-              <Route path="/signup" element={<AuthPage />} />
+              <Route path="/signup" element={
+                <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#e2fde4] via-[#f0ffe8] to-[#fff7ea] px-4">
+                  <SignupForm />
+                </div>
+              } />
               <Route path="/home" element={
                 <ProtectedRoute>
                   <DashboardPage />

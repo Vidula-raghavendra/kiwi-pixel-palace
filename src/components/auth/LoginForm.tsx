@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
@@ -10,6 +11,7 @@ export default function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { signIn } = useAuth();
 
   function validate() {
     if (!email) return "Email required";
@@ -19,20 +21,21 @@ export default function LoginForm() {
     return "";
   }
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const v = validate();
     if (v) return setError(v);
     setLoading(true);
+    setError("");
 
-    setTimeout(() => {
-      // Simulate success for demo
-      setError("");
-      setLoading(false);
-      // Store user email in sessionStorage for demo purposes
-      sessionStorage.setItem("loginEmail", email);
+    try {
+      await signIn(email, pw);
       navigate("/home");
-    }, 500);
+    } catch (err: any) {
+      setError(err.message || "Failed to sign in");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
